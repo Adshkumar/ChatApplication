@@ -9,7 +9,7 @@ router.post('/login', login);
 router.post('/logout', logoutUser);
 router.put('/update-profile', protectRoute, updateProfile);
 
-router.get("check", protectRoute, (req, res) => {
+router.get("/check", protectRoute, (req, res) => {
     res.status(200).json({ message: "You are authorized", user: req.user });
 });
 export default router;

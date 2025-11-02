@@ -106,10 +106,8 @@ export const logoutUser = async (req, res) => {
             return res.status(400).json({ message: 'No token provided' });
         }
 
-        // Blacklist the token
         await BlacklistToken.create({ token });
 
-        // Clear the cookie
         res.clearCookie('token');
 
         res.status(200).json({ message: 'Logout successful' });
