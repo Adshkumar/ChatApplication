@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
-    "dotenv": "^17.2.3",
+    "daisyui": "^4.12.14",
+    "dotenv": "^17.2.3", 
     "mongoose": "^8.19.2",
     "tailwindcss": "^4.1.16"
   }

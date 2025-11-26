@@ -6,16 +6,23 @@ import toast from "react-hot-toast";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null); // Add this state to store the actual file
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+    
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
+    // Store the actual file
+    setImageFile(file);
+
+    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
@@ -25,6 +32,7 @@ const MessageInput = () => {
 
   const removeImage = () => {
     setImagePreview(null);
+    setImageFile(null); // Clear the file too
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -33,14 +41,23 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview) return;
 
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
+      // Create FormData for file upload
+      const formData = new FormData();
+      
+      if (text.trim()) {
+        formData.append("text", text.trim());
+      }
+      
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      await sendMessage(formData);
 
       // Clear form
       setText("");
       setImagePreview(null);
+      setImageFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);

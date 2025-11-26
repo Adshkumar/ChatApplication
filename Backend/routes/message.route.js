@@ -3,7 +3,8 @@ import { protectRoute } from "../middleware/auth.middleware.js";
 import {
   getMessages,
   getUsersForSidebar,
-  sendMessage, 
+  sendMessage,
+  uploadMiddleware,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
@@ -14,7 +15,7 @@ router.get("/users", protectRoute, getUsersForSidebar);
 // ✅ Get chat messages between logged-in user and another user
 router.get("/:id", protectRoute, getMessages);
 
-// ✅ Send a message (use POST instead of GET)
-router.post("/send/:id", protectRoute, sendMessage);
+// ✅ Send a message with file upload support
+router.post("/send/:id", protectRoute, uploadMiddleware, sendMessage);
 
 export default router;

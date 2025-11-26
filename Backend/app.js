@@ -12,34 +12,33 @@ import messageRouter from "./routes/message.route.js";
 
 dotenv.config();
 
-// ✅ Connect to Database
 connectDB();
 
 const app = express();
 
-// ✅ Middleware
+// Updated CORS configuration
 app.use(
   cors({
-    origin: "http://localhost:5173", 
-    credentials: true, 
+    origin: "http://localhost:5173",
+    credentials: true, // Allow credentials
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(process.cwd(), "public")));
 
-// ✅ Routes
 app.use("/api/auth", authRouter);
 app.use("/api/messages", messageRouter);
 
-// ✅ 404 Handler
 app.use((req, res, next) => {
   next(createError(404, "Route not found"));
 });
 
-// ✅ Error Handler
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
     error: {
