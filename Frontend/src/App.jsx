@@ -33,20 +33,22 @@ const App = () => {
       </div>
     );
 
-  return (
-    <div data-theme={theme}>
-      <Navbar />
+return (
+  // ⬇⬇ ADD data-theme back here - THIS IS REQUIRED!
+  <div data-theme={theme}>
+    <Navbar />
 
-      <Routes>
-        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
-        <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
-      </Routes>
+    <Routes>
+      <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+      <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
+      <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+    </Routes>
 
-      <Toaster />
-    </div>
-  );
+    <Toaster />
+  </div>
+);
 };
+
 export default App;
