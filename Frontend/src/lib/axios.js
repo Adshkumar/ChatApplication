@@ -8,11 +8,10 @@
 import axios from 'axios';
 
 export const axiosInstance = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: "https://chatapplication-rs0f.onrender.com/api",
     withCredentials: true,
 });
 
-// Add request interceptor to automatically attach token
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -26,7 +25,6 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-// Add response interceptor to handle auth errors
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {

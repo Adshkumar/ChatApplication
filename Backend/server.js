@@ -6,16 +6,20 @@ import { Server } from "socket.io";
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const isProduction = process.env.NODE_ENV === 'production';
 // Create HTTP server so socket.io can attach to it
 const server = http.createServer(app);
 
-// Initialize Socket.IO
+// Initialize Socket.IO add this *
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: isProduction && FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, 'http://localhost:5173']
+     : "http://localhost:5173",
     credentials: true,
   },
+  transports: ['websocket', 'polling'], 
 });
 
 // Make io accessible to routes
@@ -43,6 +47,7 @@ io.on("connection", (socket) => {
 });
 
 // Start server
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT,  () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`🌐 CORS configured for: ${isProduction ? 'Production + Localhost' : FRONTEND_URL}`);
 });

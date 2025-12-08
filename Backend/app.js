@@ -16,12 +16,26 @@ connectDB();
 
 const app = express();
 
-// Updated CORS configuration
+// Updated CORS configuration add *
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const isProduction = process.env.NODE_ENV === 'production';
+
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//     credentials: true, // Allow credentials
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   })
+// );
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    // ✅ Allow multiple origins in production
+    origin: isProduction 
+      ? [FRONTEND_URL, "http://localhost:5173"] 
+      : FRONTEND_URL,
     credentials: true, // Allow credentials
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );

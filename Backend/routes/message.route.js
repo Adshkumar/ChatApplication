@@ -9,13 +9,10 @@ import {
 
 const router = express.Router();
 
-// ✅ Get list of users for sidebar
 router.get("/users", protectRoute, getUsersForSidebar);
 
-// ✅ Get chat messages between logged-in user and another user
 router.get("/:id", protectRoute, getMessages);
 
-// ✅ Send a message with file upload support
 router.post("/send/:id", protectRoute, uploadMiddleware, sendMessage);
 
 export default router;
