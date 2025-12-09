@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
+import cors from "cors";
 import connectDB from "./config/db.js";
 import createError from "http-errors";
 import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
-import cors from "cors";
 
 import authRouter from "./routes/auth.route.js";
 import messageRouter from "./routes/message.route.js";
@@ -17,9 +17,13 @@ connectDB();
 const app = express();
 
 // Updated CORS configuration add *
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const isProduction = process.env.NODE_ENV === 'production';
-
+const allowedOrigins = isProduction
+  ? [
+      'https://chat-application-git-main-adshkumars-projects.vercel.app',
+      'http://localhost:5173'
+    ]
+  : ['http://localhost:5173'];
 // app.use(
 //   cors({
 //     origin: "http://localhost:5173",
