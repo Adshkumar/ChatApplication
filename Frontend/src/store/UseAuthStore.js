@@ -3,8 +3,7 @@
 // import toast from "react-hot-toast";
 // import { io } from "socket.io-client";
 
-// const BASE_URL =
-//   import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+// const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 // export const useAuthStore = create((set, get) => ({
 //   authUser: null,
@@ -17,7 +16,7 @@
 
 //   checkAuth: async () => {
 //     try {
-//       const token = localStorage.getItem('token');
+//       const token = localStorage.getItem("token");
 //       if (!token) {
 //         set({ authUser: null, isCheckingAuth: false });
 //         return;
@@ -25,11 +24,11 @@
 
 //       const res = await axiosInstance.get("/auth/check");
 //       console.log("✅ Auth check successful:", res.data);
-//       set({ authUser: res.data.user }); 
+//       set({ authUser: res.data.user });
 //       get().connectSocket();
 //     } catch (error) {
 //       console.log("❌ Error in checkAuth:", error.response?.data);
-//       localStorage.removeItem('token');
+//       localStorage.removeItem("token");
 //       set({ authUser: null });
 //     } finally {
 //       set({ isCheckingAuth: false });
@@ -40,11 +39,9 @@
 //     set({ isSigningUp: true });
 //     try {
 //       const res = await axiosInstance.post("/auth/register", data);
-      
-//       // Store token in localStorage
-//       localStorage.setItem('token', res.data.token);
-//       console.log("✅ Token stored:", res.data.token);
-      
+
+//       localStorage.setItem("token", res.data.token);
+
 //       set({ authUser: res.data.user });
 //       toast.success("Account created successfully");
 //       get().connectSocket();
@@ -59,11 +56,9 @@
 //     set({ isLoggingIn: true });
 //     try {
 //       const res = await axiosInstance.post("/auth/login", data);
-      
-//       // Store token in localStorage
-//       localStorage.setItem('token', res.data.token);
-//       // console.log("✅ Token stored:", res.data.token);
-      
+
+//       localStorage.setItem("token", res.data.token);
+
 //       set({ authUser: res.data.user });
 //       toast.success("Logged in successfully");
 //       get().connectSocket();
@@ -77,7 +72,7 @@
 //   logout: async () => {
 //     try {
 //       await axiosInstance.post("/auth/logout");
-//       localStorage.removeItem('token');
+//       localStorage.removeItem("token");
 //       set({ authUser: null });
 //       toast.success("Logged out successfully");
 //       get().disconnectSocket();
@@ -93,7 +88,6 @@
 //       set({ authUser: res.data.user });
 //       toast.success("Profile updated successfully");
 //     } catch (error) {
-//       console.log("error in update profile:", error);
 //       toast.error(error.response?.data?.message || "Profile update failed");
 //     } finally {
 //       set({ isUpdatingProfile: false });
@@ -102,12 +96,12 @@
 
 //   connectSocket: () => {
 //     const { authUser } = get();
-    
+
 //     if (!authUser) {
 //       console.log("❌ No authUser, cannot connect socket");
 //       return;
 //     }
-    
+
 //     if (get().socket?.connected) {
 //       console.log("✅ Socket already connected");
 //       return;
@@ -115,15 +109,11 @@
 
 //     console.log("🟡 Attempting socket connection for user:", authUser._id);
 
-//     const socket = io("http://localhost:5000", {
-//       query: {
-//         userId: authUser._id,
-//       },
+//     const socket = io(BASE_URL, {
+//       query: { userId: authUser._id },
+//       transports: ["websocket"], // REQUIRED FOR RENDER
 //     });
-    
-//     socket.connect();
 
-//     // Add detailed connection event listeners
 //     socket.on("connect", () => {
 //       console.log("✅ Socket connected successfully. ID:", socket.id);
 //     });
@@ -154,12 +144,24 @@
 //   },
 // }));
 
+
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+// Get base URL for Socket.IO (without /api)
+const getSocketBaseUrl = () => {
+  // For production (Render)
+  if (window.location.hostname.includes('vercel.app')) {
+    return 'https://chatapplication-rs0f.onrender.com';
+  }
+  // For local development
+  return 'http://localhost:5000';
+};
+
+// Or use environment variable (recommended)
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || getSocketBaseUrl();
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -264,10 +266,12 @@ export const useAuthStore = create((set, get) => ({
     }
 
     console.log("🟡 Attempting socket connection for user:", authUser._id);
+    console.log("🟡 Socket URL:", SOCKET_URL);
 
-    const socket = io(BASE_URL, {
+    const socket = io(SOCKET_URL, {
       query: { userId: authUser._id },
-      transports: ["websocket"], // REQUIRED FOR RENDER
+      transports: ["websocket", "polling"], // Keep both for fallback
+      path: "/socket.io/", // Explicit path
     });
 
     socket.on("connect", () => {
@@ -293,8 +297,9 @@ export const useAuthStore = create((set, get) => ({
   },
 
   disconnectSocket: () => {
-    if (get().socket?.connected) {
-      get().socket.disconnect();
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.disconnect();
       console.log("🔴 Socket manually disconnected");
     }
   },
