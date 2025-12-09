@@ -3,7 +3,18 @@
 // import toast from "react-hot-toast";
 // import { io } from "socket.io-client";
 
-// const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+// // Get base URL for Socket.IO (without /api)
+// const getSocketBaseUrl = () => {
+//   // For production (Render)
+//   if (window.location.hostname.includes('vercel.app')) {
+//     return 'https://chatapplication-rs0f.onrender.com';
+//   }
+//   // For local development
+//   return 'http://localhost:5000';
+// };
+
+// // Or use environment variable (recommended)
+// const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || getSocketBaseUrl();
 
 // export const useAuthStore = create((set, get) => ({
 //   authUser: null,
@@ -108,10 +119,12 @@
 //     }
 
 //     console.log("🟡 Attempting socket connection for user:", authUser._id);
+//     console.log("🟡 Socket URL:", SOCKET_URL);
 
-//     const socket = io(BASE_URL, {
+//     const socket = io(SOCKET_URL, {
 //       query: { userId: authUser._id },
-//       transports: ["websocket"], // REQUIRED FOR RENDER
+//       transports: ["websocket", "polling"], // Keep both for fallback
+//       path: "/socket.io/", // Explicit path
 //     });
 
 //     socket.on("connect", () => {
@@ -137,8 +150,9 @@
 //   },
 
 //   disconnectSocket: () => {
-//     if (get().socket?.connected) {
-//       get().socket.disconnect();
+//     const { socket } = get();
+//     if (socket?.connected) {
+//       socket.disconnect();
 //       console.log("🔴 Socket manually disconnected");
 //     }
 //   },
@@ -150,18 +164,25 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// Get base URL for Socket.IO (without /api)
-const getSocketBaseUrl = () => {
-  // For production (Render)
-  if (window.location.hostname.includes('vercel.app')) {
+// Function to get socket URL dynamically
+const getSocketUrl = () => {
+  // Check if we're in browser environment
+  if (typeof window === 'undefined') return '';
+  
+  // Use environment variable if available
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  
+  // Determine based on current URL
+  const hostname = window.location.hostname;
+  if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
     return 'https://chatapplication-rs0f.onrender.com';
   }
-  // For local development
+  
+  // Default to localhost for development
   return 'http://localhost:5000';
 };
-
-// Or use environment variable (recommended)
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || getSocketBaseUrl();
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -265,13 +286,15 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
+    // Get socket URL dynamically each time
+    const socketUrl = getSocketUrl();
     console.log("🟡 Attempting socket connection for user:", authUser._id);
-    console.log("🟡 Socket URL:", SOCKET_URL);
+    console.log("🟡 Socket URL:", socketUrl);
 
-    const socket = io(SOCKET_URL, {
+    const socket = io(socketUrl, {
       query: { userId: authUser._id },
-      transports: ["websocket", "polling"], // Keep both for fallback
-      path: "/socket.io/", // Explicit path
+      transports: ["websocket", "polling"],
+      // REMOVE path: "/socket.io/" - This might be causing issues
     });
 
     socket.on("connect", () => {
@@ -284,6 +307,7 @@ export const useAuthStore = create((set, get) => ({
 
     socket.on("connect_error", (error) => {
       console.log("❌ Socket connection error:", error.message);
+      console.log("❌ Error details:", error);
     });
 
     socket.on("getOnlineUsers", (userIds) => {
@@ -302,5 +326,6 @@ export const useAuthStore = create((set, get) => ({
       socket.disconnect();
       console.log("🔴 Socket manually disconnected");
     }
+    set({ socket: null });
   },
 }));
