@@ -1,3 +1,4 @@
+// app.js
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
@@ -16,29 +17,43 @@ connectDB();
 
 const app = express();
 
-// Get FRONTEND_URL from environment variables with fallback
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Production CORS configuration
+// CORS configuration that allows ALL Vercel preview URLs
 app.use(
   cors({
-    origin: isProduction 
-      ? [
-          "https://chat-application-git-main-adshkumars-projects.vercel.app",
-          "http://localhost:5173",
-          "https://chat-application-adshkumars-projects.vercel.app" // Add your main Vercel URL too
-        ] 
-      : FRONTEND_URL,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://chat-application-git-main-adshkumars-projects.vercel.app",
+        "https://chat-application-adshkumars-projects.vercel.app"
+      ];
+      
+      // Allow ALL vercel.app domains in production
+      if (isProduction && origin.includes('.vercel.app')) {
+        return callback(null, true);
+      }
+      
+      // Check against specific allowed origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      console.log("⚠️ CORS blocked origin:", origin);
+      return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
-// Add logging for CORS in production
 if (isProduction) {
-  console.log(`🌐 Production CORS configured for: ${FRONTEND_URL}`);
+  console.log(`🌐 Production CORS configured to allow all .vercel.app domains`);
 }
 
 app.use(logger("dev"));
