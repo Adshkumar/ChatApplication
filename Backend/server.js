@@ -20,10 +20,10 @@ const io = new Server(server, {
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
+        "https://chat-application-adshkumars-projects.vercel.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://chat-application-git-main-adshkumars-projects.vercel.app",
-        "https://chat-application-adshkumars-projects.vercel.app"
       ];
       
       // Allow ALL vercel.app domains in production
