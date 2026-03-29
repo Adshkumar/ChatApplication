@@ -9,13 +9,13 @@ const getClientIp = (req) => {
 };
 
 export const limiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
+  windowMs: 1 * 60 * 1000,
+  max: 100,
   keyGenerator: getClientIp,
   handler: (req, res) => {
     // console.log("LIMIT HIT from:", getClientIp(req));
     res.status(429).json({
-      error: "Too many requests, please try again after 10 minutes"
+      error: "Too many requests, please try again after 1 minute"
     });
   }
 });
@@ -23,7 +23,7 @@ export const limiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 10,
+  max: 20,
   keyGenerator: getClientIp,
   handler: (req, res) => {
     // console.log("AUTH LIMITER HIT from:", getClientIp(req));
