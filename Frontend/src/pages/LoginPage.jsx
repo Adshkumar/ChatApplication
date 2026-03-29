@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../store/UseAuthStore.js";
 import AuthImagePattern from "../components/AuthImagePattern";
 import { Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
@@ -46,8 +46,8 @@ const LoginPage = () => {
               <h2 className="text-2xl font-bold">Rate Limit Exceeded</h2>
               <p className="text-error/80">{authRateLimitMessage}</p>
               <p className="text-sm opacity-70 mt-4">Please wait a few moments before trying again.</p>
-              <button 
-                className="btn btn-outline btn-error mt-6" 
+              <button
+                className="btn btn-outline btn-error mt-6"
                 onClick={() => window.location.reload()}
               >
                 Try Again
