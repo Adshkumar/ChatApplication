@@ -10,20 +10,20 @@ import logger from "morgan";
 
 import authRouter from "./routes/auth.route.js";
 import messageRouter from "./routes/message.route.js";
+import { limiter, authLimiter } from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
 connectDB();
 
 const app = express();
-
+app.set('trust proxy', 1);
 const isProduction = process.env.NODE_ENV === 'production';
 
-// CORS configuration that allows ALL Vercel preview URLs
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
+
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
@@ -33,12 +33,10 @@ app.use(
         "https://chat-application-adshkumars-projects.vercel.app"
       ];
       
-      // Allow ALL vercel.app domains in production
       if (isProduction && origin.includes('.vercel.app')) {
         return callback(null, true);
       }
       
-      // Check against specific allowed origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -55,6 +53,9 @@ app.use(
 if (isProduction) {
   console.log(`🌐 Production CORS configured to allow all .vercel.app domains`);
 }
+    
+app.use(limiter);
+// app.use("/login", authLimiter);
 
 app.use(logger("dev"));
 app.use(express.json({ limit: "10mb" }));
