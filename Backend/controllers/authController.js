@@ -97,10 +97,16 @@ export const logoutUser = async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-      return res.status(400).json({ message: "No token provided" });
+      // No token — treat as already logged out
+      return res.status(200).json({ message: "Logout successful" });
     }
 
-    await BlacklistToken.create({ token });
+    try {
+      await BlacklistToken.create({ token });
+    } catch (err) {
+      // Duplicate key error (11000) means token already blacklisted — that's fine
+      if (err.code !== 11000) throw err;
+    }
 
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {

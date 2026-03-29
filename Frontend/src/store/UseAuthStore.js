@@ -101,14 +101,18 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
+    // Always clear local state first — user should always be logged out client-side
+    localStorage.removeItem("token");
+    get().disconnectSocket();
+    set({ authUser: null });
+    toast.success("Logged out successfully");
+
+    // Attempt to blacklist token on server (best-effort, don't block logout)
     try {
       await axiosInstance.post("/auth/logout");
-      localStorage.removeItem("token");
-      set({ authUser: null });
-      toast.success("Logged out successfully");
-      get().disconnectSocket();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Logout failed");
+      // Silently ignore server errors — user is already logged out locally
+      console.warn("Logout server call failed (token may already be blacklisted):", error.response?.data?.message);
     }
   },
 
