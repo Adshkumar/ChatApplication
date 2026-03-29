@@ -10,7 +10,7 @@ const getClientIp = (req) => {
 
 export const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 5,
+  max: 10,
   keyGenerator: getClientIp,
   handler: (req, res) => {
     // console.log("LIMIT HIT from:", getClientIp(req));
@@ -23,7 +23,7 @@ export const limiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 5,
+  max: 10,
   keyGenerator: getClientIp,
   handler: (req, res) => {
     // console.log("AUTH LIMITER HIT from:", getClientIp(req));
