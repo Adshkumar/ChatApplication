@@ -15,7 +15,7 @@ export const limiter = rateLimit({
   handler: (req, res) => {
     // console.log("LIMIT HIT from:", getClientIp(req));
     res.status(429).json({
-      error: "Too many requests, please try again after 15 minutes"
+      error: "Too many requests, please try again after 10 minutes"
     });
   }
 });
