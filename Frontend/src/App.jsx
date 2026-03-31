@@ -115,7 +115,13 @@ const App = () => {
       <IncomingCallModal />
       <VideoCallWindow />
 
-      <Toaster />
+      <Toaster 
+        containerStyle={{ zIndex: 999999 }}
+        toastOptions={{ 
+          style: { zIndex: 999999 },
+          position: "top-right"
+        }} 
+      />
     </div>
   );
 };
