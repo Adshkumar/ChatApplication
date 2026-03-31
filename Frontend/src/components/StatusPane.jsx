@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStatusStore } from "../store/useStatusStore";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Plus, Trash2, X, Image as ImageIcon, Video, Send, Loader2, CircleDashed, Eye, Users, MessageCircle } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";

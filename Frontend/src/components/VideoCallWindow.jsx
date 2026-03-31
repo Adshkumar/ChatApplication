@@ -316,7 +316,7 @@ const VideoCallWindow = () => {
                 style={{ width: "90px", height: "90px", borderRadius: "50%", border: "3px solid rgba(200,160,60,0.6)" }}
               />
             </div>
-            <p style={{ color: "#c8a03c", fontWeight: 700, fontSize: "1.2rem", margin: 0, letterSpacing: "1px" }}>Connecting Local Host…</p>
+            <p style={{ color: "#c8a03c", fontWeight: 700, fontSize: "1.2rem", margin: 0, letterSpacing: "1px" }}>Connecting Call…</p>
           </div>
         )}
 

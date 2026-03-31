@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { useCallHistoryStore } from "../store/useCallHistoryStore";
 import { LogOut, MessageSquare, Settings, User } from "lucide-react";

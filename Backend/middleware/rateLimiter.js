@@ -15,7 +15,7 @@ export const limiter = rateLimit({
   handler: (req, res) => {
     // console.log("LIMIT HIT from:", getClientIp(req));
     res.status(429).json({
-      error: "Too many requests, please try again after 1 minute"
+      message: "Too many requests, please try again after 1 minute"
     });
   }
 });
@@ -28,7 +28,7 @@ export const authLimiter = rateLimit({
   handler: (req, res) => {
     // console.log("AUTH LIMITER HIT from:", getClientIp(req));
     res.status(429).json({
-      error: 'Too many login attempts from this IP, please try again after 10 minutes'
+      message: 'Too many login attempts from this IP, please try again after 10 minutes'
     });
   }
 });

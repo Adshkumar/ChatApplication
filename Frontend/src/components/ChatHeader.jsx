@@ -1,5 +1,5 @@
 import { X, Video, ArrowLeft } from "lucide-react";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 

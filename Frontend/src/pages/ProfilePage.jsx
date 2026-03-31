@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Camera, Mail, User, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 

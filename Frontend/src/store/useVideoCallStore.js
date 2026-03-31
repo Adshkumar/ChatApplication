@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { useAuthStore } from "./UseAuthStore";
+import { useAuthStore } from "./useAuthStore";
 import toast from "react-hot-toast";
 
 // WebRTC ICE configuration
@@ -203,6 +203,7 @@ export const useVideoCallStore = create((set, get) => ({
 
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        console.warn(`Peer connection to ${remoteUserId} ${pc.connectionState}`);
       }
     };
 
@@ -303,6 +304,7 @@ export const useVideoCallStore = create((set, get) => ({
     socket.on("ice-candidate", (payload) => get().handleIceCandidate(payload));
     socket.on("call-ended", () => get().handleCallEnded());
     socket.on("call-log-updated", () => {
+      console.log("Call log updated in background");
     });
 
     set({ _isSubscribed: true });

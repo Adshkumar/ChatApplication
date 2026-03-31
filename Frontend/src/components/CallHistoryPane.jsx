@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useCallHistoryStore } from "../store/useCallHistoryStore";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { formatMessageTime } from "../lib/utils";
 import { PhoneIncoming, PhoneOutgoing, PhoneMissed, Video, Phone, Trash2 } from "lucide-react";

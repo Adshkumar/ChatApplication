@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { useAuthStore } from "../store/UseAuthStore";
+import { useAuthStore } from "../store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { useCallHistoryStore } from "../store/useCallHistoryStore";
 import { History, Users, CircleDashed } from "lucide-react";
@@ -19,7 +19,7 @@ const Sidebar = () => {
 
   const filteredUsers = users
     .filter((user) => user._id !== (authUser?._id || authUser?.id))
-    .filter((user) => (showOnlineOnly ? onlineUsers.includes(user._id) : true))
+    .filter((user) => (showOnlineOnly ? onlineUsers.includes(user._id?.toString()) : true))
     .sort((a, b) => {
       const dateA = a.lastMessage ? new Date(a.lastMessage.createdAt) : new Date(0);
       const dateB = b.lastMessage ? new Date(b.lastMessage.createdAt) : new Date(0);
@@ -100,7 +100,7 @@ const Sidebar = () => {
                 />
                 
                 {/* Online Status Badge (Bottom Right) */}
-                {onlineUsers.includes(user._id) && (
+                {onlineUsers.includes(user._id?.toString()) && (
                   <span
                     className="absolute bottom-0 right-0 size-3.5 bg-green-500 
                     rounded-full ring-2 ring-base-100"
@@ -151,7 +151,7 @@ const Sidebar = () => {
                     )
                   ) : (
                     <span className="text-zinc-500/60 text-xs italic">
-                       {onlineUsers.includes(user._id) ? "Online" : "Say hello!"}
+                       {onlineUsers.includes(user._id?.toString()) ? "Online" : "Say hello!"}
                     </span>
                   )}
                 </div>
