@@ -1,4 +1,12 @@
 {
+  "name": "chatapplication",
+  "version": "1.0.0",
+  "scripts": {
+    "install-frontend": "npm install --prefix Frontend",
+    "build": "npm run build --prefix Frontend",
+    "dev": "npm run dev --prefix Frontend",
+    "postinstall": "npm run install-frontend"
+  },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
