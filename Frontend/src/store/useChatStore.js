@@ -11,6 +11,7 @@ export const useChatStore = create((set, get) => ({
   isMessagesLoading: false,
   isTyping: false,
   unreadCounts: {},
+  _isSubscribedToMessages: false,
 
   getUsers: async () => {
     set({ isUsersLoading: true });
@@ -60,6 +61,7 @@ export const useChatStore = create((set, get) => ({
   },
 
   markMessagesAsRead: async (userId) => {
+    if (!userId || userId === "undefined") return;
     try {
       await axiosInstance.put(`/messages/mark-read/${userId}`);
       set((state) => ({
@@ -90,9 +92,11 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
+    if (get()._isSubscribedToMessages) return;
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
+    get().unsubscribeFromMessages();
     socket.on("newMessage", (newMessage) => {
       const { selectedUser, messages, users, unreadCounts } = get();
 
@@ -158,6 +162,8 @@ export const useChatStore = create((set, get) => ({
     socket.on("user-stop-typing", ({ fromUserId }) => {
       if (get().selectedUser?._id === fromUserId) set({ isTyping: false });
     });
+
+    set({ _isSubscribedToMessages: true });
   },
 
   unsubscribeFromMessages: () => {
@@ -169,6 +175,7 @@ export const useChatStore = create((set, get) => ({
       socket.off("user-stop-typing");
       socket.off("messagesSeen");
     }
+    set({ _isSubscribedToMessages: false });
   },
 
   setTyping: (isTypingInput) => {
@@ -180,9 +187,9 @@ export const useChatStore = create((set, get) => ({
 
   setSelectedUser: (selectedUser) => {
     if (selectedUser) {
-      const userId = selectedUser._id || selectedUser.id;
+      const userId = (selectedUser._id || selectedUser.id || selectedUser).toString();
       set((state) => ({
-        selectedUser,
+        selectedUser: typeof selectedUser === 'string' ? { _id: selectedUser } : selectedUser,
         unreadCounts: { ...state.unreadCounts, [userId]: 0 }
       }));
     } else {

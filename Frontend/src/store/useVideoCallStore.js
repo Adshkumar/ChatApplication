@@ -42,7 +42,6 @@ export const useVideoCallStore = create((set, get) => ({
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     } catch (err) {
-      // console.error("Media error:", err);
       toast.error("Camera access denied.");
       return;
     }
@@ -76,17 +75,14 @@ export const useVideoCallStore = create((set, get) => ({
     const { incomingOffer, remoteUser, roomId, _getSocket, _getAuthUser, _createPeerConnection } = get();
     const socket = _getSocket();
     const authUser = _getAuthUser();
-    
-    // Check if we already have a call in progress OR if we're already accepting
+
     if (!socket || !authUser || !incomingOffer || !remoteUser) return;
     if (get().callStatus === "active") return;
 
-    // 1. Immediately close the modal so we don't get 'stuck' if camera is slow
     set({ callStatus: "active", incomingOffer: null });
 
     let stream;
     try {
-      // 2. Request camera with a shorter delay/alert
       toast.loading("Accessing camera...", { id: "media" });
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       toast.success("Camera connected!", { id: "media" });
@@ -99,7 +95,6 @@ export const useVideoCallStore = create((set, get) => ({
 
     const toUserId = (remoteUser._id || remoteUser.id).toString();
 
-    // 3. Setup PeerConnection in the background
     if (get().peers[toUserId]) {
       get().peers[toUserId].pc?.close();
     }
@@ -132,6 +127,7 @@ export const useVideoCallStore = create((set, get) => ({
     const socket = _getSocket();
     const toUserId = (remoteUser?._id || remoteUser?.id)?.toString();
     if (socket && toUserId) socket.emit("call-rejected", { toUserId, roomId });
+    set({ incomingOffer: null });
     get()._cleanup();
   },
 
@@ -172,7 +168,6 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   _createPeerConnection: (remoteUserId, localStream, roomId) => {
-    // console.log(`📡 Creating PeerConnection for: ${remoteUserId}`);
     const pc = new RTCPeerConnection(ICE_SERVERS);
 
     localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
@@ -187,13 +182,10 @@ export const useVideoCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (event) => {
-      // DIAGNOSTIC TOAST
       if (event.track.kind === "video") toast.success(`Video feed received!`, { id: "video-rx" });
 
-      // Create a fresh MediaStream or add track to existing one
       set((state) => {
         const peer = state.peers[remoteUserId];
-        // Ensure we handle the case where multiple tracks (audio/video) arrive separately
         const stream = event.streams[0] || peer?.remoteStream || new MediaStream();
 
         if (!stream.getTracks().find(t => t.id === event.track.id)) {
@@ -203,7 +195,6 @@ export const useVideoCallStore = create((set, get) => ({
         return {
           peers: {
             ...state.peers,
-            // CLONE the stream to force VideoBox useEffect to trigger srcObject assignment
             [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: new MediaStream(stream.getTracks()) },
           },
         };
@@ -211,9 +202,7 @@ export const useVideoCallStore = create((set, get) => ({
     };
 
     pc.onconnectionstatechange = () => {
-      //  console.log(`🚦 [${remoteUserId}] Connection: ${pc.connectionState}`);
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-        // Handle disconnection
       }
     };
 
@@ -222,9 +211,10 @@ export const useVideoCallStore = create((set, get) => ({
 
   handleIncomingCall: ({ fromUser, offer, roomId, isAddedToCall }) => {
     const { callStatus } = get();
-    // Ignore incoming calls if we are already in a call (unless it's a group invite)
     if (callStatus !== "idle" && callStatus !== "none" && !isAddedToCall) {
-      console.log("📞 Busy: Ignoring incoming call signal");
+      if (get().roomId !== roomId) {
+        get()._getSocket()?.emit("call-rejected", { toUserId: fromUser._id, roomId });
+      }
       return;
     }
 
@@ -235,19 +225,22 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   handleCallAccepted: async ({ answer, toUserId, fromUserId }) => {
+    const { peers, _processPendingCandidates } = get();
+    const userId = fromUserId || toUserId;
+    const targetId = userId?.toString();
+    const peer = targetId ? peers[targetId] : Object.values(peers)[0];
+
+    if (!peer || !peer.pc) return;
+
     try {
-      const sessionId = targetId || Object.keys(peers)[0];
-      
-      // GUARD: If we are already stable, don't try to set the answer again
       if (peer.pc.signalingState === "stable") {
-        console.log("🚦 Signaling: Connection already stable, skipping redundant answer");
         return;
       }
 
-      toast.loading("Setting remote description...", { id: "signaling" });
+      toast.loading("Linking streams...", { id: "signaling" });
       await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
-      get()._processPendingCandidates(sessionId);
-      toast.success("Connection established!", { id: "signaling" });
+      _processPendingCandidates(targetId || Object.keys(peers)[0]);
+      toast.success("Connected!", { id: "signaling" });
     } catch (err) {
       console.error("Error setting answer:", err);
       if (err.name !== "InvalidStateError") {
@@ -263,7 +256,6 @@ export const useVideoCallStore = create((set, get) => ({
     const peer = peers[peerId];
 
     if (!peer || !peer.pc || !peer.pc.remoteDescription) {
-      console.log(`⏳ Queuing candidate for ${peerId}`);
       set((state) => {
         const p = state.peers[peerId] || { pendingIceCandidates: [] };
         return {
@@ -282,7 +274,6 @@ export const useVideoCallStore = create((set, get) => ({
     const peer = get().peers[userId];
     if (!peer || !peer.pc || !peer.pendingIceCandidates?.length) return;
 
-    console.log(`🧊 Flushing ${peer.pendingIceCandidates.length} candidates for ${userId}`);
     for (const candidate of peer.pendingIceCandidates) {
       try {
         await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -299,7 +290,6 @@ export const useVideoCallStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
-    // Clean up any existing listeners to prevent duplicates
     socket.off("incoming-call");
     socket.off("call-accepted");
     socket.off("call-rejected");
@@ -313,7 +303,6 @@ export const useVideoCallStore = create((set, get) => ({
     socket.on("ice-candidate", (payload) => get().handleIceCandidate(payload));
     socket.on("call-ended", () => get().handleCallEnded());
     socket.on("call-log-updated", () => {
-      // Refresh call history if the store exists
     });
 
     set({ _isSubscribed: true });

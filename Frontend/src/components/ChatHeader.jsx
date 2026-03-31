@@ -43,23 +43,27 @@ const ChatHeader = () => {
         {/* Right side buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* Video call button */}
-          <button
-            onClick={() => !isCallActive && startCall(selectedUser)}
-            title={isCallActive ? "Call in progress" : "Start video call"}
+           <button
+            onClick={() => isOnline && !isCallActive && startCall(selectedUser)}
+            disabled={!isOnline || isCallActive}
+            title={!isOnline ? `${selectedUser.fullName} is offline` : isCallActive ? "Call in progress" : "Start video call"}
             style={{
               width: "38px",
               height: "38px",
               borderRadius: "50%",
-              background: isCallActive
-                ? "rgba(46,204,113,0.2)"
-                : "rgba(200,160,60,0.12)",
-              border: `1px solid ${isCallActive ? "rgba(46,204,113,0.5)" : "rgba(200,160,60,0.35)"}`,
+              background: !isOnline
+                ? "rgba(100,100,100,0.05)"
+                : isCallActive
+                  ? "rgba(46,204,113,0.2)"
+                  : "rgba(200,160,60,0.12)",
+              border: `1px solid ${!isOnline ? "rgba(100,100,100,0.2)" : isCallActive ? "rgba(46,204,113,0.5)" : "rgba(200,160,60,0.35)"}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: isCallActive ? "not-allowed" : "pointer",
+              cursor: !isOnline || isCallActive ? "not-allowed" : "pointer",
               transition: "all 0.2s",
-              color: isCallActive ? "#2ecc71" : "#c8a03c",
+              color: !isOnline ? "#555" : isCallActive ? "#2ecc71" : "#c8a03c",
+              opacity: !isOnline ? 0.4 : 1,
             }}
             onMouseEnter={(e) => {
               if (!isCallActive) {

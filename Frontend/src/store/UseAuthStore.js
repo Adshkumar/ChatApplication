@@ -3,21 +3,6 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const getSocketUrl = () => {
-  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
-
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:5000';
-  }
-
-  // Fallback to auto-detection for known deployment platforms
-  if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
-    return 'https://chatapplication-rs0f.onrender.com';
-  }
-
-  return 'http://localhost:5000';
-};
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -38,11 +23,9 @@ export const useAuthStore = create((set, get) => ({
       }
 
       const res = await axiosInstance.get("/auth/check");
-      // console.log("✅ Auth check successful:", res.data);
       set({ authUser: res.data.user });
       get().connectSocket();
     } catch (error) {
-      // console.log("❌ Error in checkAuth:", error.response?.data);
       localStorage.removeItem("token");
       set({ authUser: null });
     } finally {
@@ -54,9 +37,7 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/register", data);
-
       localStorage.setItem("token", res.data.token);
-
       set({ authUser: res.data.user });
       toast.success("Account created successfully");
       get().connectSocket();
@@ -79,18 +60,13 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-
       localStorage.setItem("token", res.data.token);
-
       set({ authUser: res.data.user });
       toast.success("Logged in successfully");
       get().connectSocket();
     } catch (error) {
       if (error.response?.status === 429) {
-        let msg = "Too many authentication attempts. Please try again in 10 minutes.";
-        const data = error.response?.data;
-        if (typeof data === 'string') msg = data;
-        else if (data && typeof data.message === 'string') msg = data.message;
+        let msg = "Too many authentication attempts.";
         set({ authRateLimitMessage: msg });
       } else {
         toast.error(error.response?.data?.message || "Login failed");
@@ -107,9 +83,7 @@ export const useAuthStore = create((set, get) => ({
     toast.success("Logged out successfully");
     try {
       await axiosInstance.post("/auth/logout");
-    } catch (error) {
-      // console.warn("Logout server call failed (token may already be blacklisted):", error.response?.data?.message);
-    }
+    } catch (error) {}
   },
 
   updateProfile: async (data) => {
@@ -127,55 +101,23 @@ export const useAuthStore = create((set, get) => ({
 
   connectSocket: () => {
     const { authUser } = get();
+    if (!authUser) return;
+    if (get().socket?.connected) return;
 
-    if (!authUser) {
-      console.log("❌ No authUser, cannot connect socket");
-      return;
-    }
-
-    if (get().socket?.connected) {
-      console.log("✅ Socket already connected");
-      return;
-    }
-
-    const socketUrl = getSocketUrl();
-    // console.log("🟡 Attempting socket connection for user:", authUser._id);
-    // console.log("🟡 Socket URL:", socketUrl);
-
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const socket = io(socketUrl, {
       query: { userId: authUser._id },
       transports: ["websocket", "polling"],
     });
 
-    socket.on("connect", () => {
-      console.log("✅ Socket connected successfully. ID:", socket.id);
-    });
-
-    socket.on("disconnect", (reason) => {
-      console.log("🔴 Socket disconnected. Reason:", reason);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.log("❌ Socket connection error:", error.message);
-      console.log("❌ Error details:", error);
-    });
-
-    socket.on("getOnlineUsers", (userIds) => {
-      console.log("👥 Online users received:", userIds);
-      set({ onlineUsers: userIds });
-    });
+    socket.on("getOnlineUsers", (userIds) => set({ onlineUsers: userIds }));
 
     set({ socket });
-
-    // console.log("🟡 Socket instance created, waiting for connection...");
   },
 
   disconnectSocket: () => {
     const { socket } = get();
-    if (socket?.connected) {
-      socket.disconnect();
-      console.log("🔴 Socket manually disconnected");
-    }
+    if (socket?.connected) socket.disconnect();
     set({ socket: null });
   },
 }));

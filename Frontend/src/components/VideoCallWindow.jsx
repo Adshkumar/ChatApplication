@@ -11,18 +11,21 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
   useEffect(() => {
     if (ref.current && stream) {
       ref.current.srcObject = stream;
-      
+
       const kickstart = () => {
         if (ref.current) {
-          ref.current.play().catch(() => {});
-          // Ensure audio is enabled if it's the remote stream
-          if (!muted && ref.current.paused) ref.current.play().catch(() => {});
+          if (ref.current.paused || ref.current.readyState < 2) {
+            ref.current.play().catch(() => { });
+          }
+          if (!muted && ref.current.paused) {
+            ref.current.play().catch(() => { });
+          }
         }
       };
 
       kickstart();
-      const timer = setInterval(kickstart, 2000);
-      return () => clearInterval(timer);
+      const interval = setInterval(kickstart, 1500);
+      return () => clearInterval(interval);
     }
   }, [stream, muted]);
 
@@ -34,6 +37,7 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
         overflow: "hidden",
         background: "#0a0812",
         border: "1px solid rgba(200,160,60,0.2)",
+        flex: 1,
         ...style,
       }}
     >
@@ -173,9 +177,9 @@ const VideoCallWindow = () => {
             padding: "8px",
           }}
         >
-           <button onClick={() => window.location.reload()} title="Emergency Refresh" style={minBtnStyle("#c8a03c")}><X size={14} style={{transform: 'rotate(45deg)'}} /></button>
-           <button onClick={toggleMinimize} style={minBtnStyle("#2ecc71")}><Maximize2 size={14} /></button>
-           <button onClick={endCall} style={minBtnStyle("#ff4757")}><PhoneOff size={14} /></button>
+          <button onClick={() => window.location.reload()} title="Emergency Refresh" style={minBtnStyle("#c8a03c")}><X size={14} style={{ transform: 'rotate(45deg)' }} /></button>
+          <button onClick={toggleMinimize} style={minBtnStyle("#2ecc71")}><Maximize2 size={14} /></button>
+          <button onClick={endCall} style={minBtnStyle("#ff4757")}><PhoneOff size={14} /></button>
         </div>
       </div>
     );
@@ -218,9 +222,9 @@ const VideoCallWindow = () => {
             </p>
           </div>
         </div>
-        
+
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: "1px" }}>VER 3.0</div>
+          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: "1px" }}>VER 3.1</div>
           <button
             onClick={() => window.location.reload()}
             title="Emergency Refresh"
@@ -245,7 +249,7 @@ const VideoCallWindow = () => {
         </div>
       </div>
 
-      {/* Video Area */}
+      {/* Video Area (Main Grid / Half-Half) */}
       <div
         style={{
           flex: 1,
@@ -256,48 +260,32 @@ const VideoCallWindow = () => {
           position: "relative",
           overflow: "hidden",
           background: "#000",
+          gap: "10px",
         }}
       >
-        {/* Remote participants */}
+        {/* Remote participant(s) */}
         {!isCalling && participantEntries.map(([userId, { remoteStream }]) => (
           <VideoBox
             key={userId}
             stream={remoteStream}
             label={remoteUser?.fullName || "Participant"}
-            style={{
-              width: "100%",
-              height: "100%",
-              ...(totalParticipants <= 2 ? { position: "absolute", inset: 0, zIndex: 1 } : { maxHeight: "480px", minHeight: "200px" })
-            }}
+            style={{ height: "100%", width: "100%" }}
           />
         ))}
 
-        {/* Local video (Yourself) */}
+        {/* Local Stream (Self) */}
         <VideoBox
           stream={localStream}
           muted
           label="You"
           style={{
-            ...(totalParticipants <= 2 || isCalling
-              ? {
-                position: "absolute",
-                top: "20px",
-                right: "20px",
-                width: isCalling ? "100%" : "160px",
-                height: isCalling ? "100%" : "240px",
-                zIndex: isCalling ? 0 : 10,
-                border: isCalling ? "none" : "2px solid rgba(255,255,255,0.2)",
-                borderRadius: isCalling ? "0" : "16px",
-                maxHeight: isCalling ? "none" : "240px",
-                boxShadow: isCalling ? "none" : "0 8px 32px rgba(0,0,0,0.5)",
-                transition: "all 0.5s ease-in-out",
-              }
-              : { width: "100%", height: "100%", maxHeight: "480px", minHeight: "200px" }
-            )
+            height: "100%",
+            width: "100%",
+            ...(isCalling ? { position: "absolute", top: 0, left: 0, zIndex: 0 } : {})
           }}
         />
 
-        {/* Calling overlay */}
+        {/* Calling Overlay */}
         {isCalling && (
           <div
             style={{
@@ -307,8 +295,10 @@ const VideoCallWindow = () => {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: "16px",
-              zIndex: 5
+              gap: "24px",
+              zIndex: 5,
+              background: "rgba(0,0,0,0.2)",
+              backdropFilter: "blur(20px)"
             }}
           >
             <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -323,19 +313,17 @@ const VideoCallWindow = () => {
               <img
                 src={remoteUser?.profilePic || "/avatar.png"}
                 alt=""
-                style={{ width: "90px", height: "90px", borderRadius: "50%", objectFit: "cover", border: "3px solid rgba(200,160,60,0.6)" }}
+                style={{ width: "90px", height: "90px", borderRadius: "50%", border: "3px solid rgba(200,160,60,0.6)" }}
               />
             </div>
-            <p style={{ color: "#c8a03c", fontWeight: 600, fontSize: "1.1rem", margin: 0 }}>Calling…</p>
+            <p style={{ color: "#c8a03c", fontWeight: 700, fontSize: "1.2rem", margin: 0, letterSpacing: "1px" }}>Connecting Local Host…</p>
           </div>
         )}
 
-        {showAddParticipant && (
-          <AddParticipantModal onClose={() => setShowAddParticipant(false)} />
-        )}
+        {showAddParticipant && <AddParticipantModal onClose={() => setShowAddParticipant(false)} />}
       </div>
 
-      {/* Controls Bar */}
+      {/* Control Buttons Bar */}
       <div
         style={{
           display: "flex",
@@ -350,7 +338,7 @@ const VideoCallWindow = () => {
         <ControlBtn onClick={toggleMute} active={isMuted} label={isMuted ? "Unmute" : "Mute"} color="#c8a03c">
           {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
         </ControlBtn>
-        <ControlBtn onClick={toggleVideo} active={isVideoOff} label={isVideoOff ? "Start Video" : "Stop Video"} color="#c8a03c">
+        <ControlBtn onClick={toggleVideo} active={isVideoOff} label={isVideoOff ? "Cam On" : "Cam Off"} color="#c8a03c">
           {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
         </ControlBtn>
         {!isCalling && (

@@ -42,7 +42,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
           </div>
         </div>
       ) : (
-        <div className={`p-4 md:p-6 space-y-3 ${isFullPanel ? "max-w-3xl mx-auto" : "w-full"}`}>
+        <div className={`p-4 md:p-5 space-y-2 ${isFullPanel ? "max-w-3xl mx-auto" : "w-full"}`}>
           {callLogs.map((log) => {
             const { isCaller, partner } = getCallInfo(log);
             if (!partner) return null;
@@ -51,7 +51,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
             return (
               <div 
                 key={log._id} 
-                className={`flex items-center justify-between p-4 transition-all duration-200 group
+                className={`flex items-center justify-between p-3.5 transition-all duration-200 group
                   ${isFullPanel 
                     ? "rounded-2xl bg-base-200/40 hover:bg-base-200 border border-base-300/30 hover:border-primary/20 shadow-sm hover:shadow-md" 
                     : "border-b border-base-300 hover:bg-base-200/60"}`}
@@ -61,7 +61,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
                     <img 
                       src={partner.profilePic || "/avatar.png"} 
                       alt={partner.fullName} 
-                      className={`${isFullPanel ? "size-14" : "size-10"} rounded-full object-cover border-2 border-base-100 shadow-sm`}
+                      className={`${isFullPanel ? "size-12" : "size-10"} rounded-full object-cover border-2 border-base-100 shadow-sm`}
                     />
                     {!isCaller && isMissed && (
                       <span className="absolute -top-1 -right-1 size-4 bg-red-500 rounded-full border-2 border-base-100 flex items-center justify-center">
@@ -71,7 +71,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
                   </div>
                   
                   <div className="min-w-0">
-                    <h3 className={`${isFullPanel ? "text-lg" : "text-base"} font-bold truncate text-base-content max-w-[150px] sm:max-w-full`}>
+                    <h3 className={`${isFullPanel ? "text-[17px]" : "text-base"} font-bold truncate text-base-content max-w-[150px] sm:max-w-full leading-tight`}>
                       {partner.fullName}
                     </h3>
                     

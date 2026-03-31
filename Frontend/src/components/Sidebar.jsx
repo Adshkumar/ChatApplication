@@ -37,11 +37,11 @@ const Sidebar = () => {
             <span className="font-bold hidden lg:block text-lg">Contacts</span>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 mr-2 translate-x-[-4px]">
               <button
                 onClick={() => setActiveSidebarTab("status")}
-                className={`btn btn-ghost btn-sm btn-circle
-                  ${activeSidebarTab === "status" ? "bg-primary/20 text-primary" : "text-zinc-400"}`}
+                className={`btn btn-ghost btn-sm btn-circle 
+                  ${activeSidebarTab === "status" ? "bg-primary/20 text-primary scale-110" : "text-zinc-400"}`}
                 title="Status Updates"
               >
                 <CircleDashed size={20} />
@@ -50,18 +50,18 @@ const Sidebar = () => {
               <button
                 onClick={() => setActiveSidebarTab("calls")}
                 className={`btn btn-ghost btn-sm btn-circle 
-                  ${activeSidebarTab === "calls" ? "bg-primary/20 text-primary" : "text-zinc-400"}`}
+                  ${activeSidebarTab === "calls" ? "bg-primary/20 text-primary scale-110" : "text-zinc-400"}`}
                 title="Call History"
               >
                 <History size={20} />
               </button>
-
+              
               <button
-                 onClick={() => setActiveSidebarTab("contacts")}
-                 className={`btn btn-ghost btn-sm btn-circle lg:hidden
-                   ${activeSidebarTab === "contacts" ? "bg-primary/20 text-primary" : "text-zinc-400"}`}
+                onClick={() => setActiveSidebarTab("contacts")}
+                className={`btn btn-ghost btn-sm btn-circle lg:hidden
+                  ${activeSidebarTab === "contacts" ? "bg-primary/20 text-primary scale-110" : "text-zinc-400"}`}
               >
-                 <Users size={20} />
+                <Users size={20} />
               </button>
           </div>
         </div>

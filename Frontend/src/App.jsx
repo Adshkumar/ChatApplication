@@ -30,7 +30,7 @@ const App = () => {
   const { theme } = useThemeStore();
   const { subscribeToCallEvents, unsubscribeFromCallEvents } = useVideoCallStore();
   const { subscribeToCallHistory, activeSidebarTab, setActiveSidebarTab } = useCallHistoryStore();
-  const { selectedUser } = useChatStore();
+  const { selectedUser, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
 
   useEffect(() => {
     checkAuth();
@@ -38,16 +38,17 @@ const App = () => {
 
   useEffect(() => {
     if (socket) {
-      // console.log("🟢 App: Socket detected, subscribing to call events");
       subscribeToCallEvents();
       const unsubscribeHistory = subscribeToCallHistory();
+      subscribeToMessages();
+
       return () => {
-        // console.log("🔴 App: Unsubscribing from call events");
         unsubscribeFromCallEvents();
         if (unsubscribeHistory) unsubscribeHistory();
+        unsubscribeFromMessages();
       };
     }
-  }, [socket, subscribeToCallEvents, unsubscribeFromCallEvents, subscribeToCallHistory]);
+  }, [socket, subscribeToCallEvents, unsubscribeFromCallEvents, subscribeToCallHistory, subscribeToMessages, unsubscribeFromMessages]);
 
   if (isCheckingAuth && !authUser)
     return (

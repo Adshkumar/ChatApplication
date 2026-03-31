@@ -9,11 +9,15 @@ const IncomingCallModal = () => {
 
   if (callStatus !== "ringing") return null;
 
-  const handleAccept = async () => {
+  const handleAccept = async (e) => {
+    if (e && e.detail === 0 && e.type === 'click') return;
+    if (isAccepting || callStatus !== "ringing") return;
+
     setIsAccepting(true);
     try {
       await acceptCall();
-    } catch (error) {
+    } catch (e) {
+      console.error("Accept failed:", e);
       setIsAccepting(false);
     }
   };

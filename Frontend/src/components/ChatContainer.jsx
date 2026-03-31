@@ -25,20 +25,21 @@ const ChatContainer = () => {
 
   useEffect(() => {
     if (selectedUser) {
-      const userId = selectedUser._id || selectedUser.id;
-      getMessages(userId);
-      markMessagesAsRead(userId);
-      subscribeToMessages();
-
-      return () => unsubscribeFromMessages();
+      const userId = selectedUser._id || selectedUser.id || selectedUser;
+      if (userId && userId !== "undefined") {
+        getMessages(userId);
+        markMessagesAsRead(userId);
+      }
     }
-  }, [selectedUser, socket, getMessages, subscribeToMessages, unsubscribeFromMessages, markMessagesAsRead]);
+  }, [selectedUser, getMessages, markMessagesAsRead]);
 
   useEffect(() => {
     if (selectedUser && messages.length > 0) {
       const lastMsg = messages[messages.length - 1];
-      if (!lastMsg.isRead && (lastMsg.senderID?._id || lastMsg.senderID) === selectedUser._id) {
-        markMessagesAsRead(selectedUser._id);
+      const userId = selectedUser._id || selectedUser.id || selectedUser;
+      const senderId = (lastMsg.senderID?._id || lastMsg.senderID || lastMsg.senderId)?.toString();
+      if (!lastMsg.isRead && senderId === userId?.toString()) {
+        markMessagesAsRead(userId);
       }
     }
   }, [messages, selectedUser, markMessagesAsRead]);
