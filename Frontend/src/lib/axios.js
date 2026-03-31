@@ -1,18 +1,18 @@
 import axios from 'axios';
 
 const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:5000/api';
   }
 
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
-      return 'https://chatapplication-rs0f.onrender.com/api';
-    }
+  // Automated detection for Render/Vercel production environments
+  if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
+    return 'https://chatapplication-rs0f.onrender.com/api';
   }
 
-  // Default to localhost for development
   return 'http://localhost:5000/api';
 };
 

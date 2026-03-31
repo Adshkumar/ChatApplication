@@ -6,23 +6,40 @@ import toast from "react-hot-toast";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-  const [imageFile, setImageFile] = useState(null); // Add this state to store the actual file
+  const [imageFile, setImageFile] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const typingTimeoutRef = useRef(null);
+  const { sendMessage, setTyping } = useChatStore();
+
+  const handleTextChange = (e) => {
+    const newText = e.target.value;
+    setText(newText);
+
+    if (newText.length > 0) {
+      setTyping(true);
+
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+      typingTimeoutRef.current = setTimeout(() => {
+        setTyping(false);
+      }, 3000);
+    } else {
+      setTyping(false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Store the actual file
     setImageFile(file);
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
@@ -32,7 +49,7 @@ const MessageInput = () => {
 
   const removeImage = () => {
     setImagePreview(null);
-    setImageFile(null); // Clear the file too
+    setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -41,21 +58,21 @@ const MessageInput = () => {
     if (!text.trim() && !imagePreview) return;
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
-      
+
       if (text.trim()) {
         formData.append("text", text.trim());
       }
-      
+
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
       await sendMessage(formData);
 
-      // Clear form
       setText("");
+      setTyping(false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       setImagePreview(null);
       setImageFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -93,7 +110,7 @@ const MessageInput = () => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTextChange}
           />
           <input
             type="file"

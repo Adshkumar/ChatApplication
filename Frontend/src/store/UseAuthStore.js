@@ -4,18 +4,18 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const getSocketUrl = () => {
-  if (typeof window === 'undefined') return '';
+  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
 
-  if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL;
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
   }
 
-  const hostname = window.location.hostname;
+  // Fallback to auto-detection for known deployment platforms
   if (hostname.includes('vercel.app') || hostname.includes('onrender.com')) {
     return 'https://chatapplication-rs0f.onrender.com';
   }
 
-  // Default to localhost for development
   return 'http://localhost:5000';
 };
 
@@ -38,11 +38,11 @@ export const useAuthStore = create((set, get) => ({
       }
 
       const res = await axiosInstance.get("/auth/check");
-      console.log("✅ Auth check successful:", res.data);
+      // console.log("✅ Auth check successful:", res.data);
       set({ authUser: res.data.user });
       get().connectSocket();
     } catch (error) {
-      console.log("❌ Error in checkAuth:", error.response?.data);
+      // console.log("❌ Error in checkAuth:", error.response?.data);
       localStorage.removeItem("token");
       set({ authUser: null });
     } finally {
@@ -101,18 +101,14 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
-    // Always clear local state first — user should always be logged out client-side
     localStorage.removeItem("token");
     get().disconnectSocket();
     set({ authUser: null });
     toast.success("Logged out successfully");
-
-    // Attempt to blacklist token on server (best-effort, don't block logout)
     try {
       await axiosInstance.post("/auth/logout");
     } catch (error) {
-      // Silently ignore server errors — user is already logged out locally
-      console.warn("Logout server call failed (token may already be blacklisted):", error.response?.data?.message);
+      // console.warn("Logout server call failed (token may already be blacklisted):", error.response?.data?.message);
     }
   },
 
@@ -143,8 +139,8 @@ export const useAuthStore = create((set, get) => ({
     }
 
     const socketUrl = getSocketUrl();
-    console.log("🟡 Attempting socket connection for user:", authUser._id);
-    console.log("🟡 Socket URL:", socketUrl);
+    // console.log("🟡 Attempting socket connection for user:", authUser._id);
+    // console.log("🟡 Socket URL:", socketUrl);
 
     const socket = io(socketUrl, {
       query: { userId: authUser._id },
@@ -171,7 +167,7 @@ export const useAuthStore = create((set, get) => ({
 
     set({ socket });
 
-    console.log("🟡 Socket instance created, waiting for connection...");
+    // console.log("🟡 Socket instance created, waiting for connection...");
   },
 
   disconnectSocket: () => {
