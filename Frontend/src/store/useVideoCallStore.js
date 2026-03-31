@@ -167,13 +167,15 @@ export const useVideoCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (event) => {
+      // DIAGNOSTIC TOAST
+      if (event.track.kind === "video") toast.success(`Video feed received!`, { id: "video-rx" });
+      
       // Create a fresh MediaStream or add track to existing one
       set((state) => {
         const peer = state.peers[remoteUserId];
-        // Use the event's stream if available, otherwise create/use our own
+        // Ensure we handle the case where multiple tracks (audio/video) arrive separately
         const stream = event.streams[0] || peer?.remoteStream || new MediaStream();
         
-        // Add the track if it's not already there
         if (!stream.getTracks().find(t => t.id === event.track.id)) {
           stream.addTrack(event.track);
         }
@@ -181,7 +183,7 @@ export const useVideoCallStore = create((set, get) => ({
         return {
           peers: {
             ...state.peers,
-            // Create a CLONE to force srcObject update in VideoBox
+            // CLONE the stream to force VideoBox useEffect to trigger srcObject assignment
             [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: new MediaStream(stream.getTracks()) },
           },
         };
@@ -215,10 +217,13 @@ export const useVideoCallStore = create((set, get) => ({
     if (!peer || !peer.pc) return;
 
     try {
+      toast.loading("Setting remote description...", { id: "signaling" });
       await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
       get()._processPendingCandidates(targetId || Object.keys(peers)[0]);
+      toast.success("Connection established!", { id: "signaling" });
     } catch (err) {
       console.error("Error setting answer:", err);
+      toast.error("Signaling failed. Retrying...");
     }
     set({ callStatus: "active" });
   },
