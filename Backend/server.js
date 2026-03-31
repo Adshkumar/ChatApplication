@@ -100,7 +100,7 @@ io.on("connection", (socket) => {
     console.log(`✅ call-accepted to Room: ${targetRoom}`);
     
     if (targetRoom) {
-      io.to(targetRoom).emit("call-accepted", { answer, roomId });
+      io.to(targetRoom).emit("call-accepted", { answer, roomId, fromUserId: userId });
     }
 
     try {

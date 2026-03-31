@@ -170,17 +170,18 @@ export const useVideoCallStore = create((set, get) => ({
       // Create a fresh MediaStream or add track to existing one
       set((state) => {
         const peer = state.peers[remoteUserId];
-        const stream = peer?.remoteStream || new MediaStream();
+        // Use the event's stream if available, otherwise create/use our own
+        const stream = event.streams[0] || peer?.remoteStream || new MediaStream();
         
-        // Add the new track (it will contain both audio and video eventually)
-        if (!stream.getTracks().includes(event.track)) {
+        // Add the track if it's not already there
+        if (!stream.getTracks().find(t => t.id === event.track.id)) {
           stream.addTrack(event.track);
         }
 
         return {
           peers: {
             ...state.peers,
-            // We create a NEW MediaStream instance to force React to update srcObject
+            // Create a CLONE to force srcObject update in VideoBox
             [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: new MediaStream(stream.getTracks()) },
           },
         };
