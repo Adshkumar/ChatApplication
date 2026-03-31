@@ -12,7 +12,11 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
     if (ref.current && stream) {
       ref.current.srcObject = stream;
       // In some browsers, manual trigger is needed to guarantee no black screen
-      ref.current.play().catch(e => {}); 
+      const play = () => ref.current?.play().catch(e => {}); 
+      play();
+      // Retry playing after a short delay in case of late track arrival
+      const timer = setTimeout(play, 1000);
+      return () => clearTimeout(timer);
     }
   }, [stream]);
 
@@ -222,7 +226,7 @@ const VideoCallWindow = () => {
           padding: "20px",
           display: "grid",
           gap: "12px",
-          gridTemplateColumns: (totalParticipants === 1 || isCalling) ? "1fr" : totalParticipants <= 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
+          gridTemplateColumns: (totalParticipants <= 2) ? "1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
           alignItems: "center",
           justifyItems: "center",
           position: "relative",

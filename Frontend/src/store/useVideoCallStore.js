@@ -218,12 +218,13 @@ export const useVideoCallStore = create((set, get) => ({
 
     try {
       toast.loading("Setting remote description...", { id: "signaling" });
+      const sessionId = targetId || Object.keys(peers)[0];
       await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
-      get()._processPendingCandidates(targetId || Object.keys(peers)[0]);
+      get()._processPendingCandidates(sessionId);
       toast.success("Connection established!", { id: "signaling" });
     } catch (err) {
       console.error("Error setting answer:", err);
-      toast.error("Signaling failed. Retrying...");
+      toast.error("Signaling sync failed.");
     }
     set({ callStatus: "active" });
   },
