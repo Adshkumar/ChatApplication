@@ -75,32 +75,38 @@ export const useVideoCallStore = create((set, get) => ({
     const { incomingOffer, remoteUser, roomId, _getSocket, _getAuthUser, _createPeerConnection } = get();
     const socket = _getSocket();
     const authUser = _getAuthUser();
+    
+    // Check if we already have a call in progress OR if we're already accepting
     if (!socket || !authUser || !incomingOffer || !remoteUser) return;
+    if (get().callStatus === "active") return;
+
+    // 1. Immediately close the modal so we don't get 'stuck' if camera is slow
+    set({ callStatus: "active", incomingOffer: null });
 
     let stream;
     try {
+      // 2. Request camera with a shorter delay/alert
+      toast.loading("Accessing camera...", { id: "media" });
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      toast.success("Camera connected!", { id: "media" });
     } catch (err) {
-      // console.error("❌ acceptCall error:", err);
-      toast.error("Could not access camera.");
+      console.error("❌ Media error:", err);
+      toast.error("Camera access failed. Is it used by another app?", { id: "media" });
       get().rejectCall();
       return;
     }
 
     const toUserId = (remoteUser._id || remoteUser.id).toString();
 
-    // Clean up any existing connection for this user
+    // 3. Setup PeerConnection in the background
     if (get().peers[toUserId]) {
       get().peers[toUserId].pc?.close();
     }
 
     const pc = _createPeerConnection(toUserId, stream, roomId);
 
-    // Update state BEFORE setRemoteDescription so candidates are handled correctly
     set((state) => ({
-      callStatus: "active",
       localStream: stream,
-      incomingOffer: null,
       peers: {
         ...state.peers,
         [toUserId]: { pc, remoteStream: null, pendingIceCandidates: state.peers[toUserId]?.pendingIceCandidates || [] }
@@ -115,6 +121,8 @@ export const useVideoCallStore = create((set, get) => ({
       get()._processPendingCandidates(toUserId);
     } catch (err) {
       console.error("Signaling error:", err);
+      toast.error("Signaling failure.");
+      get().endCall();
     }
   },
 
