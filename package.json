@@ -2,9 +2,9 @@
   "name": "chatapplication",
   "version": "1.0.0",
   "scripts": {
-    "install-frontend": "npm install --prefix Frontend",
-    "build": "npm run build --prefix Frontend",
-    "dev": "npm run dev --prefix Frontend",
+    "install-frontend": "cd Frontend && npm install",
+    "build": "cd Frontend && npm run build",
+    "dev": "cd Frontend && npm run dev",
     "postinstall": "npm run install-frontend"
   },
   "dependencies": {
