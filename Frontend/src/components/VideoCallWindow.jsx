@@ -220,27 +220,15 @@ const VideoCallWindow = () => {
           padding: "20px",
           display: "grid",
           gap: "12px",
-          gridTemplateColumns: totalParticipants === 1 ? "1fr" : totalParticipants <= 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
+          gridTemplateColumns: (totalParticipants === 1 || isCalling) ? "1fr" : totalParticipants <= 2 ? "1fr 1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
           alignItems: "center",
           justifyItems: "center",
           position: "relative",
+          overflow: "hidden",
         }}
       >
-        {/* Local video */}
-        <VideoBox
-          stream={localStream}
-          muted
-          label="You"
-          style={{
-            width: "100%",
-            height: "100%",
-            maxHeight: "480px",
-            minHeight: "200px",
-          }}
-        />
-
-        {/* Remote participants */}
-        {participantEntries.map(([userId, { remoteStream }]) => (
+        {/* Remote participants (only if not calling) */}
+        {!isCalling && participantEntries.map(([userId, { remoteStream }]) => (
           <VideoBox
             key={userId}
             stream={remoteStream}
@@ -248,11 +236,37 @@ const VideoCallWindow = () => {
             style={{
               width: "100%",
               height: "100%",
-              maxHeight: "480px",
-              minHeight: "200px",
+              // For 1-on-1, the remote user takes the full background
+              ...(totalParticipants <= 2 ? { position: "absolute", inset: 0, zIndex: 1 } : { maxHeight: "480px", minHeight: "200px" })
             }}
           />
         ))}
+
+        {/* Local video (Yourself) */}
+        <VideoBox
+          stream={localStream}
+          muted
+          label="You"
+          style={{
+            // For 1-on-1, your own video is a small overlay (PiP)
+            ...(totalParticipants <= 2 || isCalling
+              ? {
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                width: isCalling ? "100%" : "160px",
+                height: isCalling ? "100%" : "240px",
+                zIndex: isCalling ? 0 : 10,
+                border: isCalling ? "none" : "2px solid rgba(255,255,255,0.2)",
+                borderRadius: isCalling ? "0" : "16px",
+                maxHeight: isCalling ? "none" : "240px",
+                boxShadow: isCalling ? "none" : "0 8px 32px rgba(0,0,0,0.5)",
+                transition: "all 0.5s ease-in-out",
+              }
+              : { width: "100%", height: "100%", maxHeight: "480px", minHeight: "200px" }
+            )
+          }}
+        />
 
         {/* Calling overlay */}
         {isCalling && (
