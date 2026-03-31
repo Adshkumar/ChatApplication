@@ -19,6 +19,7 @@ export const useVideoCallStore = create((set, get) => ({
   roomId: null,
   incomingOffer: null,
   isAddedToCall: false,
+  _isSubscribed: false,
 
   localStream: null,
   // peers: { [userId]: { pc, remoteStream, pendingIceCandidates } }
@@ -234,23 +235,24 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   handleCallAccepted: async ({ answer, toUserId, fromUserId }) => {
-    // console.log("✅ Call officially accepted");
-    const { peers } = get();
-    const userId = fromUserId || toUserId;
-    const targetId = userId?.toString();
-
-    const peer = targetId ? peers[targetId] : Object.values(peers)[0];
-    if (!peer || !peer.pc) return;
-
     try {
-      toast.loading("Setting remote description...", { id: "signaling" });
       const sessionId = targetId || Object.keys(peers)[0];
+      
+      // GUARD: If we are already stable, don't try to set the answer again
+      if (peer.pc.signalingState === "stable") {
+        console.log("🚦 Signaling: Connection already stable, skipping redundant answer");
+        return;
+      }
+
+      toast.loading("Setting remote description...", { id: "signaling" });
       await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
       get()._processPendingCandidates(sessionId);
       toast.success("Connection established!", { id: "signaling" });
     } catch (err) {
       console.error("Error setting answer:", err);
-      toast.error("Signaling sync failed.");
+      if (err.name !== "InvalidStateError") {
+        toast.error("Signaling sync failed.");
+      }
     }
     set({ callStatus: "active" });
   },
@@ -293,6 +295,7 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   subscribeToCallEvents: () => {
+    if (get()._isSubscribed) return;
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
@@ -312,6 +315,8 @@ export const useVideoCallStore = create((set, get) => ({
     socket.on("call-log-updated", () => {
       // Refresh call history if the store exists
     });
+
+    set({ _isSubscribed: true });
   },
 
   unsubscribeFromCallEvents: () => {
