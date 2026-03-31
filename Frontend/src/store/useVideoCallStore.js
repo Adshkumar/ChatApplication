@@ -81,7 +81,8 @@ export const useVideoCallStore = create((set, get) => ({
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     } catch (err) {
-      toast.error("Camera access denied.");
+      // console.error("❌ acceptCall error:", err);
+      toast.error("Could not access camera.");
       get().rejectCall();
       return;
     }
@@ -122,6 +123,16 @@ export const useVideoCallStore = create((set, get) => ({
     const socket = _getSocket();
     const toUserId = (remoteUser?._id || remoteUser?.id)?.toString();
     if (socket && toUserId) socket.emit("call-rejected", { toUserId, roomId });
+    get()._cleanup();
+  },
+
+  handleCallRejected: () => {
+    toast.error("Call rejected");
+    get()._cleanup();
+  },
+
+  handleCallEnded: () => {
+    toast("Call ended", { icon: "📵" });
     get()._cleanup();
   },
 
@@ -169,13 +180,13 @@ export const useVideoCallStore = create((set, get) => ({
     pc.ontrack = (event) => {
       // DIAGNOSTIC TOAST
       if (event.track.kind === "video") toast.success(`Video feed received!`, { id: "video-rx" });
-      
+
       // Create a fresh MediaStream or add track to existing one
       set((state) => {
         const peer = state.peers[remoteUserId];
         // Ensure we handle the case where multiple tracks (audio/video) arrive separately
         const stream = event.streams[0] || peer?.remoteStream || new MediaStream();
-        
+
         if (!stream.getTracks().find(t => t.id === event.track.id)) {
           stream.addTrack(event.track);
         }
@@ -201,6 +212,13 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   handleIncomingCall: ({ fromUser, offer, roomId, isAddedToCall }) => {
+    const { callStatus } = get();
+    // Ignore incoming calls if we are already in a call (unless it's a group invite)
+    if (callStatus !== "idle" && callStatus !== "none" && !isAddedToCall) {
+      console.log("📞 Busy: Ignoring incoming call signal");
+      return;
+    }
+
     set({
       callStatus: "ringing", remoteUser: fromUser, incomingOffer: offer, roomId,
       isAddedToCall: !!isAddedToCall,
@@ -270,23 +288,22 @@ export const useVideoCallStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
+    // Clean up any existing listeners to prevent duplicates
     socket.off("incoming-call");
     socket.off("call-accepted");
     socket.off("call-rejected");
-    socket.off("call-ended");
     socket.off("ice-candidate");
+    socket.off("call-ended");
+    socket.off("call-log-updated");
 
     socket.on("incoming-call", (payload) => get().handleIncomingCall(payload));
     socket.on("call-accepted", (payload) => get().handleCallAccepted(payload));
-    socket.on("call-rejected", () => {
-      toast.error("Call rejected");
-      get()._cleanup();
-    });
-    socket.on("call-ended", () => {
-      toast("Call ended", { icon: "📵" });
-      get()._cleanup();
-    });
+    socket.on("call-rejected", () => get().handleCallRejected());
     socket.on("ice-candidate", (payload) => get().handleIceCandidate(payload));
+    socket.on("call-ended", () => get().handleCallEnded());
+    socket.on("call-log-updated", () => {
+      // Refresh call history if the store exists
+    });
   },
 
   unsubscribeFromCallEvents: () => {
