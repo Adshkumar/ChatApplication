@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useChatStore } from "../store/useChatStore";
 import {
-  Mic, MicOff, Video, VideoOff, PhoneOff, UserPlus, Minimize2, Maximize2,
+  Mic, MicOff, Video, VideoOff, PhoneOff, UserPlus, Minimize2, Maximize2, X
 } from "lucide-react";
 
 const VideoBox = ({ stream, muted = false, label, style = {} }) => {
@@ -148,6 +148,7 @@ const VideoCallWindow = () => {
   const totalParticipants = participantEntries.length + 1;
 
   const isCalling = callStatus === "calling";
+
   if (isMinimized) {
     return (
       <div
@@ -172,12 +173,9 @@ const VideoCallWindow = () => {
             padding: "8px",
           }}
         >
-          <button onClick={endCall} style={btnStyle("#ff4757")}>
-            <PhoneOff size={16} />
-          </button>
-          <button onClick={toggleMinimize} style={btnStyle("#c8a03c")}>
-            <Maximize2 size={16} />
-          </button>
+           <button onClick={() => window.location.reload()} title="Emergency Refresh" style={minBtnStyle("#c8a03c")}><X size={14} style={{transform: 'rotate(45deg)'}} /></button>
+           <button onClick={toggleMinimize} style={minBtnStyle("#2ecc71")}><Maximize2 size={14} /></button>
+           <button onClick={endCall} style={minBtnStyle("#ff4757")}><PhoneOff size={14} /></button>
         </div>
       </div>
     );
@@ -220,12 +218,34 @@ const VideoCallWindow = () => {
             </p>
           </div>
         </div>
-        <button onClick={toggleMinimize} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
-          <Minimize2 size={20} />
-        </button>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: "1px" }}>VER 3.0</div>
+          <button
+            onClick={() => window.location.reload()}
+            title="Emergency Refresh"
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "50%",
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer"
+            }}
+          >
+            <X size={14} style={{ transform: "rotate(45deg)" }} />
+          </button>
+          <button onClick={toggleMinimize} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
+            <Minimize2 size={20} />
+          </button>
+        </div>
       </div>
 
-      {/* Video Grid */}
+      {/* Video Area */}
       <div
         style={{
           flex: 1,
@@ -238,7 +258,7 @@ const VideoCallWindow = () => {
           background: "#000",
         }}
       >
-        {/* Remote participants (only if not calling) */}
+        {/* Remote participants */}
         {!isCalling && participantEntries.map(([userId, { remoteStream }]) => (
           <VideoBox
             key={userId}
@@ -247,7 +267,6 @@ const VideoCallWindow = () => {
             style={{
               width: "100%",
               height: "100%",
-              // For 1-on-1, the remote user takes the full background
               ...(totalParticipants <= 2 ? { position: "absolute", inset: 0, zIndex: 1 } : { maxHeight: "480px", minHeight: "200px" })
             }}
           />
@@ -259,7 +278,6 @@ const VideoCallWindow = () => {
           muted
           label="You"
           style={{
-            // For 1-on-1, your own video is a small overlay (PiP)
             ...(totalParticipants <= 2 || isCalling
               ? {
                 position: "absolute",
@@ -290,16 +308,10 @@ const VideoCallWindow = () => {
               alignItems: "center",
               justifyContent: "center",
               gap: "16px",
+              zIndex: 5
             }}
           >
-            <div
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{ position: "absolute", width: "110px", height: "110px", borderRadius: "50%", border: "3px solid rgba(200,160,60,0.5)", animation: "ring-out 1.5s ease-out infinite" }} />
               <div style={{ position: "absolute", width: "130px", height: "130px", borderRadius: "50%", border: "2px solid rgba(200,160,60,0.3)", animation: "ring-out 1.5s ease-out infinite 0.4s" }} />
               <style>{`
@@ -318,7 +330,6 @@ const VideoCallWindow = () => {
           </div>
         )}
 
-        {/* Add participant modal */}
         {showAddParticipant && (
           <AddParticipantModal onClose={() => setShowAddParticipant(false)} />
         )}
@@ -336,24 +347,17 @@ const VideoCallWindow = () => {
           borderTop: "1px solid rgba(200,160,60,0.15)",
         }}
       >
-        {/* Mute */}
         <ControlBtn onClick={toggleMute} active={isMuted} label={isMuted ? "Unmute" : "Mute"} color="#c8a03c">
           {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
         </ControlBtn>
-
-        {/* Video toggle */}
         <ControlBtn onClick={toggleVideo} active={isVideoOff} label={isVideoOff ? "Start Video" : "Stop Video"} color="#c8a03c">
           {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
         </ControlBtn>
-
-        {/* Add participant (only when active call) */}
         {!isCalling && (
           <ControlBtn onClick={() => setShowAddParticipant(!showAddParticipant)} label="Add People" color="#7b68ee">
             <UserPlus size={22} />
           </ControlBtn>
         )}
-
-        {/* End call */}
         <ControlBtn onClick={endCall} label="End Call" color="#ff4757" isEndCall>
           <PhoneOff size={22} />
         </ControlBtn>
@@ -362,12 +366,12 @@ const VideoCallWindow = () => {
   );
 };
 
-const btnStyle = (color) => ({
+const minBtnStyle = (color) => ({
   background: color,
   border: "none",
   borderRadius: "50%",
-  width: "36px",
-  height: "36px",
+  width: "28px",
+  height: "28px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
