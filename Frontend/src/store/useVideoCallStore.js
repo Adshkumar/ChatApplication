@@ -167,15 +167,24 @@ export const useVideoCallStore = create((set, get) => ({
     };
 
     pc.ontrack = (event) => {
-      // console.log(`🎞️ Received track from ${remoteUserId}:`, event.track.kind);
-      const stream = event.streams[0] || new MediaStream([event.track]);
+      // Create a fresh MediaStream or add track to existing one
+      set((state) => {
+        const peer = state.peers[remoteUserId];
+        const stream = peer?.remoteStream || new MediaStream();
+        
+        // Add the new track (it will contain both audio and video eventually)
+        if (!stream.getTracks().includes(event.track)) {
+          stream.addTrack(event.track);
+        }
 
-      set((state) => ({
-        peers: {
-          ...state.peers,
-          [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: stream },
-        },
-      }));
+        return {
+          peers: {
+            ...state.peers,
+            // We create a NEW MediaStream instance to force React to update srcObject
+            [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: new MediaStream(stream.getTracks()) },
+          },
+        };
+      });
     };
 
     pc.onconnectionstatechange = () => {

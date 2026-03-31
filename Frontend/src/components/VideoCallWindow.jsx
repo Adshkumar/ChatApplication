@@ -11,6 +11,8 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
   useEffect(() => {
     if (ref.current && stream) {
       ref.current.srcObject = stream;
+      // In some browsers, manual trigger is needed to guarantee no black screen
+      ref.current.play().catch(e => {}); 
     }
   }, [stream]);
 
