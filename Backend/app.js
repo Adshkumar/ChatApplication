@@ -10,6 +10,8 @@ import logger from "morgan";
 
 import authRouter from "./routes/auth.route.js";
 import messageRouter from "./routes/message.route.js";
+import callRouter from "./routes/call.route.js";
+import statusRouter from "./routes/status.route.js";
 import { limiter, authLimiter } from "./middleware/rateLimiter.js";
 
 dotenv.config();
@@ -23,21 +25,16 @@ const isProduction = process.env.NODE_ENV === 'production';
 app.use(
   cors({
     origin: function (origin, callback) {
-
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
-        "https://chat-application-git-main-adshkumars-projects.vercel.app",
-        "https://chat-application-adshkumars-projects.vercel.app"
-      ];
+        process.env.FRONTEND_URL
+      ].filter(Boolean);
       
-      if (isProduction && origin.includes('.vercel.app')) {
-        return callback(null, true);
-      }
-      
-      if (allowedOrigins.includes(origin)) {
+      // Allow any Vercel deployment of this project
+      if (origin.includes('.vercel.app') || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       
@@ -65,6 +62,8 @@ app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use("/api/auth", authRouter);
 app.use("/api/messages", messageRouter);
+app.use("/api/calls", callRouter);
+app.use("/api/status", statusRouter);
 
 app.use((req, res, next) => {
   next(createError(404, "Route not found"));
