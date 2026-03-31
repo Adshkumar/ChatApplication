@@ -11,14 +11,20 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
   useEffect(() => {
     if (ref.current && stream) {
       ref.current.srcObject = stream;
-      // In some browsers, manual trigger is needed to guarantee no black screen
-      const play = () => ref.current?.play().catch(e => {}); 
-      play();
-      // Retry playing after a short delay in case of late track arrival
-      const timer = setTimeout(play, 1000);
-      return () => clearTimeout(timer);
+      
+      const kickstart = () => {
+        if (ref.current) {
+          ref.current.play().catch(() => {});
+          // Ensure audio is enabled if it's the remote stream
+          if (!muted && ref.current.paused) ref.current.play().catch(() => {});
+        }
+      };
+
+      kickstart();
+      const timer = setInterval(kickstart, 2000);
+      return () => clearInterval(timer);
     }
-  }, [stream]);
+  }, [stream, muted]);
 
   return (
     <div
@@ -224,13 +230,12 @@ const VideoCallWindow = () => {
         style={{
           flex: 1,
           padding: "20px",
-          display: "grid",
-          gap: "12px",
-          gridTemplateColumns: (totalParticipants <= 2) ? "1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
+          display: "flex",
           alignItems: "center",
-          justifyItems: "center",
+          justifyContent: "center",
           position: "relative",
           overflow: "hidden",
+          background: "#000",
         }}
       >
         {/* Remote participants (only if not calling) */}
