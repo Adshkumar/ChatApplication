@@ -116,16 +116,15 @@ export const useChatStore = create((set, get) => ({
           : { ...unreadCounts, [senderId]: (unreadCounts[senderId] || 0) + 1 }
       });
 
-      if (!isFromSelected) {
-        const sender = users.find(u => (u?._id || u?.id)?.toString() === senderId);
-        const senderName = sender?.fullName || "New Message";
-        const msgText = newMessage.image ? "📷 Sent an image" : (newMessage.text || "New interaction");
-        
-        toast.success(`${senderName}: ${msgText}`, {
-          duration: 4000,
-          position: 'top-right',
-        });
-      }
+      // Always show toast notification for new messages to ensure visibility
+      const sender = users.find(u => (u?._id || u?.id)?.toString() === senderId);
+      const senderName = sender?.fullName || "New Message";
+      const msgText = newMessage.image ? "📷 Sent an image" : (newMessage.text || "Message interaction");
+      
+      toast.success(`${senderName}: ${msgText}`, {
+        duration: 4000,
+        position: 'top-right',
+      });
     });
 
     socket.on("messagesSeen", ({ byUserId }) => {

@@ -211,8 +211,8 @@ export const useVideoCallStore = create((set, get) => ({
   },
 
   handleIncomingCall: ({ fromUser, offer, roomId, isAddedToCall }) => {
-    const { callStatus } = get();
-    if (callStatus !== "idle" && callStatus !== "none" && !isAddedToCall) {
+    const currentStatus = get().callStatus;
+    if (currentStatus === "active" && !isAddedToCall) {
       if (get().roomId !== roomId) {
         get()._getSocket()?.emit("call-rejected", { toUserId: fromUser._id, roomId });
       }
