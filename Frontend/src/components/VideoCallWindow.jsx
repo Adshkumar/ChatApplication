@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff, UserPlus, Minimize2, Maximize2, X
 } from "lucide-react";
@@ -33,11 +34,15 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
     <div
       style={{
         position: "relative",
-        borderRadius: "16px",
+        borderRadius: "20px",
         overflow: "hidden",
         background: "#0a0812",
-        border: "1px solid rgba(200,160,60,0.2)",
-        flex: 1,
+        border: "2px solid rgba(200,160,60,0.25)",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: "all 0.3s ease",
         ...style,
       }}
     >
@@ -46,20 +51,36 @@ const VideoBox = ({ stream, muted = false, label, style = {} }) => {
         autoPlay
         playsInline
         muted={muted}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        style={{ 
+          width: "100%", 
+          height: "100%", 
+          objectFit: "cover", 
+          display: "block",
+          transform: muted ? "scaleX(-1)" : "none" // Mirror self view
+        }}
+      />
+      <div 
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 40%)",
+          pointerEvents: "none"
+        }}
       />
       {label && (
         <span
           style={{
             position: "absolute",
-            bottom: "10px",
-            left: "12px",
-            background: "rgba(0,0,0,0.55)",
+            bottom: "16px",
+            left: "16px",
+            background: "rgba(26, 21, 48, 0.8)",
+            backdropFilter: "blur(4px)",
             color: "#fff",
-            borderRadius: "6px",
-            padding: "2px 8px",
-            fontSize: "0.75rem",
+            borderRadius: "8px",
+            padding: "4px 12px",
+            fontSize: "0.85rem",
             fontWeight: 600,
+            border: "1px solid rgba(200,160,60,0.3)",
           }}
         >
           {label}
@@ -148,8 +169,12 @@ const VideoCallWindow = () => {
 
   if (callStatus !== "active" && callStatus !== "calling") return null;
 
-  const participantEntries = Object.entries(peers);
-  const totalParticipants = participantEntries.length + 1;
+  const authUser = useAuthStore.getState().authUser;
+  const myId = (authUser?._id || authUser?.id)?.toString();
+  const activeParticipants = Object.entries(peers).filter(([id, peer]) => 
+    !!peer.pc && id !== "undefined" && id !== "null" && id !== myId
+  );
+  const totalParticipants = activeParticipants.length + 1;
 
   const isCalling = callStatus === "calling";
 
@@ -253,23 +278,30 @@ const VideoCallWindow = () => {
       <div
         style={{
           flex: 1,
-          padding: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          padding: totalParticipants <= 2 ? "0" : "20px",
+          display: "grid",
+          gridTemplateColumns: totalParticipants === 2 ? "1fr" : totalParticipants <= 1 ? "1fr" : "repeat(auto-fit, minmax(300px, 1fr))",
+          gridTemplateRows: totalParticipants === 2 ? "repeat(2, 1fr)" : totalParticipants > 2 ? "1fr" : "100%",
+          gap: totalParticipants <= 2 ? "2px" : "15px",
+          alignItems: "stretch",
+          justifyContent: "stretch",
           position: "relative",
           overflow: "hidden",
-          background: "#000",
-          gap: "10px",
+          background: "#0a0812",
+          width: "100%",
         }}
       >
         {/* Remote participant(s) */}
-        {!isCalling && participantEntries.map(([userId, { remoteStream }]) => (
+        {!isCalling && activeParticipants.map(([userId, { remoteStream }]) => (
           <VideoBox
             key={userId}
             stream={remoteStream}
             label={remoteUser?.fullName || "Participant"}
-            style={{ height: "100%", width: "100%" }}
+            style={{ 
+              height: "100%",
+              width: "100%",
+              borderRadius: totalParticipants <= 2 ? "0" : "20px"
+            }}
           />
         ))}
 
@@ -281,7 +313,14 @@ const VideoCallWindow = () => {
           style={{
             height: "100%",
             width: "100%",
-            ...(isCalling ? { position: "absolute", top: 0, left: 0, zIndex: 0 } : {})
+            borderRadius: totalParticipants <= 2 ? "0" : "20px",
+            ...(isCalling ? { 
+              position: "absolute", 
+              inset: 0,
+              maxHeight: "none",
+              borderRadius: 0,
+              border: "none"
+            } : {})
           }}
         />
 
@@ -297,26 +336,23 @@ const VideoCallWindow = () => {
               justifyContent: "center",
               gap: "24px",
               zIndex: 5,
-              background: "rgba(0,0,0,0.2)",
-              backdropFilter: "blur(20px)"
+              background: "rgba(10, 8, 18, 0.4)",
+              backdropFilter: "blur(25px)"
             }}
           >
             <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ position: "absolute", width: "110px", height: "110px", borderRadius: "50%", border: "3px solid rgba(200,160,60,0.5)", animation: "ring-out 1.5s ease-out infinite" }} />
-              <div style={{ position: "absolute", width: "130px", height: "130px", borderRadius: "50%", border: "2px solid rgba(200,160,60,0.3)", animation: "ring-out 1.5s ease-out infinite 0.4s" }} />
-              <style>{`
-                @keyframes ring-out {
-                  0% { transform: scale(0.8); opacity: 1; }
-                  100% { transform: scale(1.4); opacity: 0; }
-                }
-              `}</style>
+              <div style={{ position: "absolute", width: "120px", height: "120px", borderRadius: "50%", border: "4px solid rgba(200,160,60,0.4)", animation: "ring-out 2s ease-out infinite" }} />
+              <div style={{ position: "absolute", width: "150px", height: "150px", borderRadius: "50%", border: "2px solid rgba(200,160,60,0.2)", animation: "ring-out 2s ease-out infinite 0.5s" }} />
               <img
                 src={remoteUser?.profilePic || "/avatar.png"}
                 alt=""
-                style={{ width: "90px", height: "90px", borderRadius: "50%", border: "3px solid rgba(200,160,60,0.6)" }}
+                style={{ width: "110px", height: "110px", borderRadius: "50%", border: "4px solid rgba(200,160,60,0.6)", objectFit: "cover", boxShadow: "0 0 40px rgba(200,160,60,0.3)" }}
               />
             </div>
-            <p style={{ color: "#c8a03c", fontWeight: 700, fontSize: "1.2rem", margin: 0, letterSpacing: "1px" }}>Connecting Call…</p>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ color: "#c8a03c", fontWeight: 800, fontSize: "1.4rem", margin: 0, letterSpacing: "2px" }}>Connecting Call…</p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", marginTop: "8px" }}>Establishing peer connection</p>
+            </div>
           </div>
         )}
 

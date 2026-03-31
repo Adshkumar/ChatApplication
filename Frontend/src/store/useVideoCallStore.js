@@ -231,14 +231,16 @@ export const useVideoCallStore = create((set, get) => ({
     const targetId = userId?.toString();
     const peer = targetId ? peers[targetId] : Object.values(peers)[0];
 
-    if (!peer || !peer.pc) return;
+    if (!peer || !peer.pc || peer.isSettingAnswer) return;
 
     try {
-      if (peer.pc.signalingState === "stable") {
-        return;
-      }
+      if (peer.pc.signalingState === "stable") return;
 
       toast.loading("Linking streams...", { id: "signaling" });
+      set(state => ({
+        peers: { ...state.peers, [targetId]: { ...peer, isSettingAnswer: true } }
+      }));
+      
       await peer.pc.setRemoteDescription(new RTCSessionDescription(answer));
       _processPendingCandidates(targetId || Object.keys(peers)[0]);
       toast.success("Connected!", { id: "signaling" });
@@ -247,12 +249,21 @@ export const useVideoCallStore = create((set, get) => ({
       if (err.name !== "InvalidStateError") {
         toast.error("Signaling sync failed.");
       }
+    } finally {
+      set(state => {
+        const currentPeer = state.peers[targetId];
+        if (!currentPeer) return state;
+        return {
+          peers: { ...state.peers, [targetId]: { ...currentPeer, isSettingAnswer: false } }
+        };
+      });
     }
     set({ callStatus: "active" });
   },
 
   handleIceCandidate: async ({ candidate, fromUserId }) => {
     const peerId = fromUserId?.toString();
+    if (!peerId || peerId === "undefined" || peerId === "null") return;
     const { peers } = get();
     const peer = peers[peerId];
 

@@ -118,13 +118,14 @@ export const useChatStore = create((set, get) => ({
 
       if (!isFromSelected) {
         const sender = users.find(u => (u._id || u.id)?.toString() === senderId);
-        if (sender) {
-          toast(`New Message from ${sender.fullName}`, {
-            icon: '🟢',
-            position: 'top-right',
-            style: { background: "#ff4757", color: "#fff", fontWeight: "bold" }
-          });
-        }
+        const senderName = sender?.fullName || "A contact";
+        const preview = newMessage.image ? "Shared an image 📷" : newMessage.text;
+        
+        toast(`${senderName}: ${preview}`, {
+          icon: '💬',
+          position: 'top-right',
+          style: { background: "#c8a03c", color: "#1a1530", fontWeight: "bold", border: "1px solid rgba(255,255,255,0.2)" }
+        });
       }
     });
 
