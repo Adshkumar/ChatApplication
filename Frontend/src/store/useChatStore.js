@@ -117,14 +117,13 @@ export const useChatStore = create((set, get) => ({
       });
 
       if (!isFromSelected) {
-        const sender = users.find(u => (u._id || u.id)?.toString() === senderId);
-        const senderName = sender?.fullName || "A contact";
-        const preview = newMessage.image ? "Shared an image 📷" : newMessage.text;
+        const sender = users.find(u => (u?._id || u?.id)?.toString() === senderId);
+        const senderName = sender?.fullName || "New Message";
+        const msgText = newMessage.image ? "📷 Sent an image" : (newMessage.text || "New interaction");
         
-        toast(`${senderName}: ${preview}`, {
-          icon: '💬',
+        toast.success(`${senderName}: ${msgText}`, {
+          duration: 4000,
           position: 'top-right',
-          style: { background: "#c8a03c", color: "#1a1530", fontWeight: "bold", border: "1px solid rgba(255,255,255,0.2)" }
         });
       }
     });
