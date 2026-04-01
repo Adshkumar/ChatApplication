@@ -22,48 +22,53 @@ const IncomingCallModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all duration-300">
-      <div className="bg-neutral w-full max-w-xs rounded-[3rem] shadow-2xl border border-primary/30 p-10 flex flex-col items-center text-center scale-110 animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-zinc-900 border border-white/10 w-full max-w-[320px] rounded-[2rem] p-6 shadow-2xl flex flex-col items-center gap-5 text-center relative overflow-hidden group">
+        {/* Background Glow */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-transparent opacity-50"></div>
         
-        {/* Pulsing Avatar Ring */}
-        <div className="relative mb-8">
-            <div className="absolute -inset-4 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
-            <div className="size-24 rounded-full border-4 border-primary/40 p-1 bg-neutral z-10 relative">
-                <img
-                    src={remoteUser?.profilePic || "/avatar.png"}
-                    alt={remoteUser?.fullName}
-                    className="w-full h-full rounded-full object-cover"
-                />
-            </div>
-            <div className="absolute -bottom-1 -right-1 size-8 bg-primary rounded-full flex items-center justify-center text-white border-4 border-neutral scale-110">
-                <Phone size={14} className="animate-bounce" />
-            </div>
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping -z-10"></div>
+          <div className="size-20 rounded-full p-1 bg-zinc-900 border-2 border-primary shadow-xl">
+            <img 
+              src={remoteUser?.profilePic || "/avatar.png"} 
+              className="w-full h-full rounded-full object-cover"
+              alt=""
+            />
+          </div>
+          <div className="absolute -bottom-1 -right-1 size-7 bg-zinc-900 rounded-full border border-white/10 flex items-center justify-center text-primary shadow-lg">
+            <Phone size={14} fill="currentColor" />
+          </div>
         </div>
 
-        <div className="space-y-4 mb-10 text-white">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Incoming Voice Call</p>
-            <h3 className="text-2xl font-black tracking-tight">{remoteUser?.fullName}</h3>
+        <div className="z-10">
+          <span className="text-primary font-black text-[10px] uppercase tracking-[0.2em]">Incoming Voice Call</span>
+          <h3 className="text-white font-black text-xl mt-1 tracking-tight truncate max-w-[240px]">
+            {remoteUser?.fullName}
+          </h3>
         </div>
 
-        <div className="flex gap-6 w-full">
-            <button
-                onClick={rejectCall}
-                className="flex-1 h-16 rounded-3xl bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center transition-all duration-300 active:scale-95 border border-red-500/20"
-            >
-                <PhoneOff size={24} />
-            </button>
-
-            <button
-                onClick={handleAccept}
-                disabled={isAccepting}
-                className="flex-1 h-16 rounded-3xl bg-primary hover:bg-primary-focus text-primary-content flex items-center justify-center transition-all duration-300 active:scale-95 shadow-xl shadow-primary/40 group disabled:opacity-50"
-            >
-                {isAccepting ? (
-                    <span className="loading loading-spinner loading-md"></span>
-                ) : (
-                    <Phone size={24} className="fill-current" />
-                )}
-            </button>
+        <div className="flex items-center gap-4 w-full z-10 px-2 mt-1">
+          <button 
+            onClick={rejectCall}
+            className="flex-1 h-12 rounded-2xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all flex items-center justify-center border border-red-500/20 group/btn"
+          >
+            <PhoneOff size={20} className="group-hover/btn:rotate-12 transition-transform" />
+          </button>
+          
+          <button 
+            onClick={handleAccept}
+            disabled={isAccepting}
+            className="flex-1 h-12 rounded-2xl bg-primary text-primary-content hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-primary/20"
+          >
+            {isAccepting ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Phone size={20} fill="currentColor" className="animate-bounce" />
+              </div>
+            )}
+          </button>
         </div>
       </div>
     </div>

@@ -134,66 +134,167 @@ const VideoCallWindow = () => {
             <h2 className="text-xl font-black text-white tracking-tight leading-none">Voice Call</h2>
             <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-               {formatTime(duration)}
-            </p>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div 
+        className={`relative bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-500 ease-out flex flex-col overflow-hidden
+          ${isMinimized 
+            ? "fixed bottom-6 right-6 w-52 h-32 rounded-2xl flex-row items-center p-3 gap-3" 
+            : "w-full max-w-[380px] h-[600px] rounded-[2.5rem]"}`}
+      >
+        {/* Header (Hidden when minimized) */}
+        {!isMinimized && (
+          <div className="p-6 flex items-center justify-between z-10">
+            <div className="flex items-center gap-3">
+              <div className="size-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 text-primary">
+                <Volume2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-base leading-none">Voice Call</h3>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <div className="size-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="text-emerald-500/90 text-[10px] font-black uppercase tracking-widest">{callTime}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setMinimized(true)}
+                className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-all"
+              >
+                <Minimize2 size={18} />
+              </button>
+              <button 
+                onClick={endCall}
+                className="p-2 hover:bg-red-500/20 rounded-full text-white/40 hover:text-red-500 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex items-center gap-2">
-          <button onClick={() => setIsMinimized(true)} className="btn btn-ghost btn-circle btn-sm hover:bg-white/10">
-            <Minimize2 size={20} className="text-white/60" />
-          </button>
-          <button onClick={endCall} className="btn btn-ghost btn-circle btn-sm hover:bg-error/20 text-error/60">
-            <X size={20} />
-          </button>
-        </div>
+        {/* Minimized View UI */}
+        {isMinimized && (
+          <>
+            <div className="size-16 rounded-full p-0.5 bg-gradient-to-tr from-primary/50 to-transparent">
+              <img 
+                src={remoteUser?.profilePic || "/avatar.png"} 
+                className="w-full h-full rounded-full object-cover border border-white/10 shadow-lg"
+                alt=""
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+               <div className="text-white font-bold text-sm truncate">{remoteUser?.fullName}</div>
+               <div className="text-primary font-black text-[10px] mt-0.5">{callTime}</div>
+            </div>
+            <button 
+              onClick={() => setMinimized(false)}
+              className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/80 transition-all border border-white/5"
+            >
+              <Maximize2 size={18} />
+            </button>
+          </>
+        )}
+
+        {/* Main Participants View (Hidden when minimized) */}
+        {!isMinimized && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6 -mt-8">
+            {/* My Local View (Small Card) */}
+            <div className="w-full bg-white/5 rounded-3xl p-5 border border-white/5 relative overflow-hidden group">
+               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+               <div className="relative flex flex-col items-center gap-3">
+                  <div className="size-24 rounded-full p-1 bg-zinc-900 border border-white/10 shadow-xl">
+                    <img src={authUser?.profilePic || "/avatar.png"} className="w-full h-full rounded-full object-cover" alt="" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-white/90 font-bold text-sm">You (Microphone)</div>
+                    <div className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mt-1">Speaker</div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Remote Participant (Main Card) */}
+            <div className="w-full bg-white/[0.03] rounded-3xl p-6 border border-white/5 relative flex flex-col items-center gap-4">
+               <div className="relative">
+                  {/* Pulsing rings for remote audio */}
+                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping -z-10" style={{ animationDuration: '3s' }}></div>
+                  <div className="absolute -inset-2 rounded-full border border-primary/20 animate-pulse -z-10"></div>
+                  
+                  <div className="size-32 rounded-full p-1.5 bg-zinc-900 border-2 border-primary shadow-[0_0_30px_rgba(200,160,60,0.2)]">
+                    <img 
+                      src={remoteUser?.profilePic || "/avatar.png"} 
+                      className="w-full h-full rounded-full object-cover" 
+                      alt=""
+                    />
+                  </div>
+                  {/* Audio Status Indicator */}
+                  <div className="absolute bottom-1 right-1 size-8 bg-zinc-900 rounded-full border border-white/10 flex items-center justify-center text-primary shadow-lg">
+                    <Volume2 size={14} />
+                  </div>
+               </div>
+               
+               <div className="text-center">
+                  <h4 className="text-white font-black text-lg tracking-tight leading-none">{remoteUser?.fullName}</h4>
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <span className="text-primary font-black text-[10px] uppercase tracking-widest">Connected</span>
+                  </div>
+               </div>
+
+               {/* Audio Visualizer (Minimalist) */}
+               <div className="flex items-center gap-1.5 h-4 mt-2">
+                  {[...Array(12)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className="w-1 bg-primary/40 rounded-full transition-all duration-300"
+                      style={{ 
+                        height: `${Math.random() * 100}%`,
+                        animation: `pulse 1.5s ease-in-out infinite ${i * 0.1}s`
+                      }}
+                    ></div>
+                  ))}
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Controls Bar (Hidden when minimized) */}
+        {!isMinimized && (
+          <div className="p-8 mt-auto">
+            <div className="bg-zinc-800/80 backdrop-blur-xl border border-white/5 rounded-3xl p-4 flex items-center justify-between shadow-2xl">
+              <button 
+                onClick={() => setMuted(!isMuted)}
+                className={`size-12 rounded-2xl flex items-center justify-center transition-all shadow-lg
+                  ${isMuted ? "bg-red-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"}`}
+              >
+                {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+              </button>
+
+              <button 
+                onClick={endCall}
+                className="size-16 rounded-3xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xl shadow-red-500/20 group"
+              >
+                <PhoneOff size={28} className="transition-transform group-hover:rotate-12" />
+              </button>
+
+              <button className="size-12 rounded-2xl bg-white/5 text-white/60 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-lg">
+                <UserPlus size={22} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Background Decorative Gradient */}
+        {!isMinimized && (
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary/10 via-transparent to-transparent pointer-events-none"></div>
+        )}
       </div>
 
-      {/* Main Grid */}
-      <div className="flex-1 p-6 md:p-12 flex items-center justify-center">
-        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          {/* My Perspective */}
-          <AudioBox 
-            stream={localStream} 
-            muted={true} 
-            label="You (Microphone)" 
-            avatar={authUser?.profilePic} 
-          />
-
-          {/* Remote Perspective */}
-          <AudioBox 
-            stream={Object.values(peers)[0]?.remoteStream} 
-            label={remoteUser?.fullName} 
-            avatar={remoteUser?.profilePic} 
-          />
-        </div>
-      </div>
-
-      {/* Controls Bar */}
-      <div className="p-10 flex items-center justify-center animate-in slide-in-from-bottom duration-700 delay-300">
-        <div className="bg-neutral bg-opacity-80 backdrop-blur-xl border border-white/5 p-4 rounded-[2.5rem] shadow-2xl flex items-center gap-6 px-10">
-          <button 
-            onClick={toggleMute}
-            className={`btn btn-circle btn-lg ${isMuted ? 'btn-error' : 'btn-ghost bg-white/5 hover:bg-white/15'}`}
-          >
-            {isMuted ? <MicOff size={28} /> : <Mic size={28} />}
-          </button>
-
-          <button 
-            onClick={endCall}
-            className="btn btn-circle btn-lg bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-600/40 border-none scale-110 active:scale-95"
-          >
-            <PhoneOff size={28} />
-          </button>
-
-          <button 
-            onClick={handleAddParticipant}
-            className="btn btn-circle btn-lg btn-ghost bg-white/5 hover:bg-white/15 text-white/80"
-          >
-            <UserPlus size={28} />
-          </button>
-        </div>
-      </div>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes pulse {
+          0%, 100% { height: 20%; }
+          50% { height: 100%; }
+        }
+      `}} />
     </div>
   );
 };
