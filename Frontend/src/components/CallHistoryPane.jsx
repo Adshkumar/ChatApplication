@@ -110,10 +110,15 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
                     <Trash2 size={16} />
                   </button>
                   <button
-                    onClick={() => startCall(partner)}
+                    onClick={() => startCall(partner, log.type || "video")}
+                    title={`Return ${log.type === "audio" ? "audio" : "video"} call`}
                     className={`btn btn-circle ${isFullPanel ? "btn-md bg-primary text-primary-content hover:scale-105 shadow-primary/20" : "btn-sm btn-ghost hover:bg-primary/10 text-primary"} transition-all`}
                   >
-                    <Video size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
+                    {log.type === "audio" ? (
+                      <Phone size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
+                    ) : (
+                      <Video size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
+                    )}
                   </button>
                 </div>
               </div>

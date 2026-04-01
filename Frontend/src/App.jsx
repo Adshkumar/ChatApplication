@@ -42,6 +42,7 @@ const App = () => {
     // Duplicate listener protection is handled by _isSubscribedToMessages flag in the store.
     if (!socket) return;
 
+    console.log("🚦 App.jsx mounting socket listeners...");
     subscribeToCallEvents();
     const unsubscribeHistory = subscribeToCallHistory();
     subscribeToMessages();

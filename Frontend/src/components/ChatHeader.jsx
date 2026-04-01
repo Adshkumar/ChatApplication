@@ -1,4 +1,4 @@
-import { X, Video, ArrowLeft } from "lucide-react";
+import { X, Video, ArrowLeft, Phone } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
@@ -42,43 +42,43 @@ const ChatHeader = () => {
 
         {/* Right side buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Video call button */}
+          {/* Audio call button */}
            <button
-            onClick={() => isOnline && !isCallActive && startCall(selectedUser)}
+            onClick={() => isOnline && !isCallActive && startCall(selectedUser, "audio")}
             disabled={!isOnline || isCallActive}
-            title={!isOnline ? `${selectedUser.fullName} is offline` : isCallActive ? "Call in progress" : "Start video call"}
+            title={!isOnline ? `${selectedUser.fullName} is offline` : isCallActive ? "Call in progress" : "Start voice call"}
             style={{
-              width: "38px",
-              height: "38px",
+              width: "42px",
+              height: "42px",
               borderRadius: "50%",
               background: !isOnline
                 ? "rgba(100,100,100,0.05)"
                 : isCallActive
                   ? "rgba(46,204,113,0.2)"
-                  : "rgba(200,160,60,0.12)",
-              border: `1px solid ${!isOnline ? "rgba(100,100,100,0.2)" : isCallActive ? "rgba(46,204,113,0.5)" : "rgba(200,160,60,0.35)"}`,
+                  : "rgba(52,152,219,0.12)",
+              border: `1px solid ${!isOnline ? "rgba(100,100,100,0.2)" : isCallActive ? "rgba(46,204,113,0.5)" : "rgba(52,152,219,0.35)"}`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: !isOnline || isCallActive ? "not-allowed" : "pointer",
               transition: "all 0.2s",
-              color: !isOnline ? "#555" : isCallActive ? "#2ecc71" : "#c8a03c",
+              color: !isOnline ? "#555" : isCallActive ? "#2ecc71" : "#3498db",
               opacity: !isOnline ? 0.4 : 1,
             }}
             onMouseEnter={(e) => {
               if (!isCallActive) {
-                e.currentTarget.style.background = "rgba(200,160,60,0.25)";
+                e.currentTarget.style.background = "rgba(52,152,219,0.25)";
                 e.currentTarget.style.transform = "scale(1.08)";
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = isCallActive
                 ? "rgba(46,204,113,0.2)"
-                : "rgba(200,160,60,0.12)";
+                : "rgba(52,152,219,0.12)";
               e.currentTarget.style.transform = "scale(1)";
             }}
           >
-            <Video size={18} />
+            <Phone size={20} />
           </button>
 
           {/* Close button */}
