@@ -7,7 +7,6 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [isSending, setIsSending] = useState(false);
   const isSendingRef = useRef(false);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -57,37 +56,41 @@ const MessageInput = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim() && !imagePreview) return;
+    const currentText = text.trim();
+    const currentImage = imageFile;
+    const currentPreview = imagePreview;
+
+    if (!currentText && !currentPreview) return;
     
-    // Prevent duplicate sends from rapid clicks or double-submit synchronously
+    // Prevent completely synchronous duplicate submission clicks
     if (isSendingRef.current) return;
-
     isSendingRef.current = true;
-    setIsSending(true);
+
+    // Capture form data
+    const formData = new FormData();
+    if (currentText) formData.append("text", currentText);
+    if (currentImage) formData.append("image", currentImage);
+
+    // IMMEDIATELY clear the UI so the user experiences zero delay
+    // and can aggressively start typing the next message instantly
+    setText("");
+    setImagePreview(null);
+    setImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    
+    // Explicitly send stop-typing signal
+    setTyping(false);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Unlock the form instantly for the next message
+    isSendingRef.current = false;
+    // We intentionally don't set isSending to true here anymore, since we cleared
+    // the UI instantly, disabling the button visually is actually slowing them down!
+
     try {
-      const formData = new FormData();
-
-      if (text.trim()) {
-        formData.append("text", text.trim());
-      }
-
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
-
       await sendMessage(formData);
-
-      setText("");
-      setTyping(false);
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      setImagePreview(null);
-      setImageFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Failed to send message:", error);
-    } finally {
-      setIsSending(false);
-      isSendingRef.current = false;
     }
   };
 
@@ -142,7 +145,7 @@ const MessageInput = () => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={(!text.trim() && !imagePreview) || isSending}
+          disabled={!text.trim() && !imagePreview}
         >
           <Send size={22} />
         </button>
