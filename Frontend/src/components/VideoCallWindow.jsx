@@ -19,6 +19,8 @@ const VideoCallWindow = () => {
 
   useEffect(() => {
     let timer;
+    setSeconds(0);
+    setCallTime("0:00");
     if (callStatus === "active") {
       timer = setInterval(() => {
         setSeconds(prev => {
@@ -31,17 +33,17 @@ const VideoCallWindow = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [callStatus]);
+  }, [callStatus, roomId]);
 
   if (callStatus !== "active") return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+    <div key={roomId} className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
       <div 
         className={`relative bg-[#0b0b0b] transition-all duration-500 ease-out flex flex-col overflow-hidden text-white
           ${isMinimized 
             ? "fixed bottom-6 right-6 w-52 h-28 rounded-2xl flex-row items-center p-3 gap-3 shadow-2xl border border-white/10" 
-            : "w-full h-full sm:w-[380px] sm:h-[650px] sm:max-h-[90vh] sm:rounded-[2.5rem] sm:border sm:border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)]"}`}
+            : "w-full h-full sm:w-[380px] sm:h-[620px] sm:max-h-[90vh] sm:rounded-[2.5rem] sm:border sm:border-white/10 shadow-[0_0_60px_rgba(0,0,0,0.8)]"}`}
       >
         {/* Header (Top Bar) */}
         {!isMinimized && (
