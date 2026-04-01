@@ -8,7 +8,7 @@ import CallHistoryPane from "./CallHistoryPane";
 import StatusPane from "./StatusPane";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, isTyping, unreadCounts } = useChatStore();
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, isTyping, unreadCounts, searchQuery, setSearchQuery, searchUsers, searchResults, isSearchingUsers } = useChatStore();
   const { authUser, onlineUsers } = useAuthStore();
   const { activeSidebarTab, setActiveSidebarTab } = useCallHistoryStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
@@ -16,6 +16,14 @@ const Sidebar = () => {
   useEffect(() => {
     getUsers();
   }, [getUsers]);
+
+  // Debounce global search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      searchUsers(searchQuery);
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, searchUsers]);
 
   const filteredUsers = users
     .filter((user) => user._id !== (authUser?._id || authUser?.id))
@@ -34,7 +42,7 @@ const Sidebar = () => {
         <div className={`flex items-center justify-between ${activeSidebarTab === "status" ? "mb-1" : "mb-4"}`}>
           <div className="flex items-center gap-2">
             <Users className="size-6 text-primary" />
-            <span className="font-bold hidden lg:block text-lg">Contacts</span>
+            <span className="font-bold hidden lg:block text-lg">Chats</span>
           </div>
           
           <div className="flex items-center gap-1 mr-2 translate-x-[-4px]">
@@ -66,6 +74,18 @@ const Sidebar = () => {
           </div>
         </div>
 
+        {activeSidebarTab === "contacts" && (
+          <div className="mt-2 mb-2 w-full px-1">
+            <input
+              type="text"
+              placeholder="Search users..."
+              className="input input-bordered input-sm w-full bg-base-200/50 focus:bg-base-200"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
+
         <div className="hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
@@ -73,6 +93,7 @@ const Sidebar = () => {
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
               className="checkbox checkbox-sm"
+              disabled={!!searchQuery}
             />
             <span className="text-sm">Show online only</span>
           </label>
@@ -82,6 +103,51 @@ const Sidebar = () => {
 
       <div className={`flex-1 overflow-y-auto w-full ${activeSidebarTab === "status" ? "pt-0 pb-3" : "py-3"}`}>
         {activeSidebarTab === "contacts" ? (
+          searchQuery ? (
+            isSearchingUsers ? (
+              <div className="text-center text-zinc-500 py-4 text-sm font-medium animate-pulse">Searching users...</div>
+            ) : searchResults.length === 0 ? (
+              <div className="text-center text-zinc-500 py-4 text-sm">No users found</div>
+            ) : (
+              searchResults.map((user) => (
+                <button
+                  key={user._id}
+                  onClick={() => {
+                     setSelectedUser(user);
+                     setSearchQuery("");
+                  }}
+                  className={`
+                    w-full p-3 flex items-center gap-3
+                    hover:bg-base-300 transition-colors
+                    ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""}
+                  `}
+                >
+                  <div className="relative mx-auto lg:mx-0 shrink-0">
+                    <img
+                      src={user.profilePic || "/avatar.png"}
+                      alt={user.fullName}
+                      className="size-12 object-cover rounded-full border border-base-300"
+                    />
+                    {onlineUsers.includes(user._id?.toString()) && (
+                      <span className="absolute bottom-0 right-0 size-3.5 bg-green-500 rounded-full ring-2 ring-base-100" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left min-w-0 pr-1 ml-2">
+                    <div className="font-bold truncate text-base-content text-[15px] leading-tight mb-1">
+                      {user.fullName}
+                    </div>
+                    <div className="text-[13px] text-primary font-medium">Click to chat</div>
+                  </div>
+                </button>
+              ))
+            )
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center text-zinc-500 py-4 text-sm mt-4">
+              <span className="opacity-70">No recent chats.</span>
+              <br/>
+              <span className="opacity-50 text-xs">Search for a user to begin!</span>
+            </div>
+          ) : (
           filteredUsers.map((user) => (
             <button
               key={user._id}
@@ -158,6 +224,7 @@ const Sidebar = () => {
               </div>
             </button>
           ))
+          )
         ) : activeSidebarTab === "calls" ? (
           <CallHistoryPane />
         ) : (

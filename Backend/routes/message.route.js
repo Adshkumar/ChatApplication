@@ -7,11 +7,13 @@ import {
   deleteMessage,
   markMessagesAsRead,
   uploadMiddleware,
+  searchUsers,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
 
 router.get("/users", protectRoute, getUsersForSidebar);
+router.get("/search", protectRoute, searchUsers);
 router.get("/:id", protectRoute, getMessages);
 
 router.post("/send/:id", protectRoute, uploadMiddleware, sendMessage);

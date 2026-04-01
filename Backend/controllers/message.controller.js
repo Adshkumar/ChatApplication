@@ -105,13 +105,29 @@ export const getUsersForSidebar = async (req, res) => {
                 }
             },
 
-            // 3. Shape the output
+            // 3. ONLY RETURN USERS WITH A MESSAGE HISTORY (ex: WhatsApp logic)
+            // Filter out any user where lastMessageArr is an empty array
+            {
+                $match: {
+                    lastMessageArr: { $ne: [] }
+                }
+            },
+            
+            // 4. Shape the output
             {
                 $addFields: {
                     lastMessage: { $arrayElemAt: ["$lastMessageArr", 0] }
                 }
             },
-            { $project: { password: 0, lastMessageArr: 0 } }
+            
+            // 5. SORT BY MOST RECENT MESSAGE AT THE TOP
+            {
+                $addFields: {
+                    sortDate: "$lastMessage.createdAt"
+                }
+            },
+            { $sort: { sortDate: -1 } },
+            { $project: { password: 0, lastMessageArr: 0, sortDate: 0 } }
         ]);
 
         res.status(200).json(users);
@@ -253,6 +269,32 @@ export const markMessagesAsRead = async (req, res) => {
         res.status(200).json({ message: "Messages marked as read" });
     } catch (error) {
         console.error("Error in markMessagesAsRead:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+export const searchUsers = async (req, res) => {
+    try {
+        const loggedInUserID = req.user._id;
+        const { query } = req.query;
+
+        if (!query || query.trim().length === 0) {
+            return res.status(200).json([]); // Return empty if no query
+        }
+
+        const users = await User.find({
+            _id: { $ne: loggedInUserID },
+            $or: [
+                { fullName: { $regex: query, $options: "i" } },
+                { email: { $regex: query, $options: "i" } }
+            ]
+        })
+        .select("-password")
+        .limit(10); // Limit results to prevent massive payloads
+
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Error in searchUsers: ", error.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
