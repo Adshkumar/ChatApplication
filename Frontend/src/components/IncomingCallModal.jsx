@@ -16,6 +16,11 @@ const IncomingCallModal = () => {
     setIsAccepting(true);
     try {
       await acceptCall();
+      // If acceptCall finished but didn't actually transition us to 'active'
+      // (e.g. because of an early return error), we must turn off the spinner
+      if (useVideoCallStore.getState().callStatus === "ringing") {
+        setIsAccepting(false);
+      }
     } catch (e) {
       console.error("Accept failed:", e);
       setIsAccepting(false);

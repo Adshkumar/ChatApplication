@@ -78,7 +78,13 @@ export const useVideoCallStore = create((set, get) => ({
     const socket = _getSocket();
     const authUser = _getAuthUser();
 
-    if (!socket || !authUser || !incomingOffer || !remoteUser) return;
+    if (!socket) { toast.error("Socket disconnected"); return; }
+    if (!authUser) { toast.error("Auth user missing"); return; }
+    if (!remoteUser) { toast.error("Remote user missing"); return; }
+    if (!incomingOffer) {
+      toast.error("Call offer missing - please ask them to call again");
+      return;
+    }
     if (get().callStatus === "active") return;
 
     set({ callStatus: "active", incomingOffer: null });
@@ -331,7 +337,9 @@ export const useVideoCallStore = create((set, get) => ({
       socket.off("call-rejected");
       socket.off("call-ended");
       socket.off("ice-candidate");
+      socket.off("call-log-updated");
     }
+    set({ _isSubscribed: false });
   },
 
   _cleanup: () => {

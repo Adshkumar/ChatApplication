@@ -35,6 +35,15 @@ const io = new Server(server, {
     credentials: true,
   },
   transports: ['websocket', 'polling'],
+  // --- Scalability tuning ---
+  pingInterval: 25000,         // Ping every 25s to detect dead connections
+  pingTimeout: 20000,          // Consider disconnected after 20s no pong
+  maxHttpBufferSize: 2e6,      // 2MB max per message (handles image sends)
+  perMessageDeflate: {         // Compress messages to reduce bandwidth
+    threshold: 1024,           // Only compress messages > 1KB
+  },
+  connectTimeout: 10000,       // Fail fast if connection takes >10s
+  upgradeTimeout: 10000,
 });
 
 app.set('socketio', io);

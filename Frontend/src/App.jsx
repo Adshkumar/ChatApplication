@@ -37,18 +37,23 @@ const App = () => {
   }, [checkAuth]);
 
   useEffect(() => {
-    if (socket) {
-      subscribeToCallEvents();
-      const unsubscribeHistory = subscribeToCallHistory();
-      subscribeToMessages();
+    // Just check socket is present — don't check socket.connected because the socket
+    // object is stored in state BEFORE the handshake finishes (connected would be false).
+    // Duplicate listener protection is handled by _isSubscribedToMessages flag in the store.
+    if (!socket) return;
 
-      return () => {
-        unsubscribeFromCallEvents();
-        if (unsubscribeHistory) unsubscribeHistory();
-        unsubscribeFromMessages();
-      };
-    }
-  }, [socket, subscribeToCallEvents, unsubscribeFromCallEvents, subscribeToCallHistory, subscribeToMessages, unsubscribeFromMessages]);
+    subscribeToCallEvents();
+    const unsubscribeHistory = subscribeToCallHistory();
+    subscribeToMessages();
+
+    return () => {
+      // Teardown cleanly so next socket instance triggers a fresh subscription
+      unsubscribeFromCallEvents();
+      if (unsubscribeHistory) unsubscribeHistory();
+      unsubscribeFromMessages();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket]);
 
   if (isCheckingAuth && !authUser)
     return (

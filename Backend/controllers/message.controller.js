@@ -72,35 +72,49 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-export const getUsersForSidebar = async (req, res ) => {
+export const getUsersForSidebar = async (req, res) => {
     try {
         const loggedInUserID = req.user._id;
-        
-        // 1. Get all users except current
-        const users = await User.find({ _id: { $ne: loggedInUserID } }).select("-password");
 
-        // 2. Efficiently fetch last messages for all these users in one go
-        const usersWithLastMsg = await Promise.all(users.map(async (user) => {
-            const lastMsg = await Message.findOne({
-                $or: [
-                    { senderID: loggedInUserID, receiverID: user._id },
-                    { senderID: user._id, receiverID: loggedInUserID }
-                ]
-            }).sort({ createdAt: -1 });
+        // Single aggregation pipeline — replaces N+1 individual queries
+        const users = await User.aggregate([
+            // 1. Exclude logged-in user
+            { $match: { _id: { $ne: loggedInUserID } } },
 
-            return {
-                ...user.toObject(),
-                lastMessage: lastMsg ? {
-                    text: lastMsg.text,
-                    image: lastMsg.image,
-                    senderID: lastMsg.senderID,
-                    createdAt: lastMsg.createdAt,
-                    isDeleted: lastMsg.isDeleted
-                } : null
-            };
-        }));
+            // 2. Join with messages where either party is the chat partner
+            {
+                $lookup: {
+                    from: "messages",
+                    let: { partnerId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $or: [
+                                        { $and: [{ $eq: ["$senderID", loggedInUserID] }, { $eq: ["$receiverID", "$$partnerId"] }] },
+                                        { $and: [{ $eq: ["$senderID", "$$partnerId"] }, { $eq: ["$receiverID", loggedInUserID] }] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $sort: { createdAt: -1 } },
+                        { $limit: 1 },
+                        { $project: { text: 1, image: 1, senderID: 1, createdAt: 1, isDeleted: 1, isRead: 1 } }
+                    ],
+                    as: "lastMessageArr"
+                }
+            },
 
-        res.status(200).json(usersWithLastMsg);
+            // 3. Shape the output
+            {
+                $addFields: {
+                    lastMessage: { $arrayElemAt: ["$lastMessageArr", 0] }
+                }
+            },
+            { $project: { password: 0, lastMessageArr: 0 } }
+        ]);
+
+        res.status(200).json(users);
     } catch (error) {
         console.error("Error in getUsersForSidebar: ", error.message);
         res.status(500).json({ error: "Internal Server Error" });

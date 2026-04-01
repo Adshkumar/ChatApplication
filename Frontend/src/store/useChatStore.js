@@ -3,6 +3,18 @@ import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore.js";
 
+// Module-level deduplication Set — lives outside Zustand so it survives
+// HMR reloads and StrictMode double-mounts without leaking listeners.
+// Automatically clears each message ID after 10 seconds.
+const recentMessageIds = new Set();
+const markProcessed = (id) => {
+  const idStr = id?.toString();
+  if (!idStr || recentMessageIds.has(idStr)) return false; // already processed
+  recentMessageIds.add(idStr);
+  setTimeout(() => recentMessageIds.delete(idStr), 10000); // cleanup after 10s
+  return true; // first time processing this message
+};
+
 export const useChatStore = create((set, get) => ({
   messages: [],
   users: [],
@@ -92,40 +104,68 @@ export const useChatStore = create((set, get) => ({
   },
 
   subscribeToMessages: () => {
+    // If already subscribed, do NOT re-subscribe (prevents listener stacking = duplicate messages)
     if (get()._isSubscribedToMessages) return;
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
 
-    get().unsubscribeFromMessages();
+    // Remove any stale listeners before adding fresh ones
+    socket.off("newMessage");
+    socket.off("messagesSeen");
+    socket.off("messageDeleted");
+    socket.off("user-typing");
+    socket.off("user-stop-typing");
+
     socket.on("newMessage", (newMessage) => {
+      // Deduplicate at the module level — prevents double-toast from HMR
+      // reloads, StrictMode double-mounts, or any duplicate listener registration
+      if (!markProcessed(newMessage._id)) return;
+
       const { selectedUser, messages, users, unreadCounts } = get();
 
-      const senderId = (newMessage.senderID?._id || newMessage.senderID)?.toString();
-      const currentSelectedId = (selectedUser?._id || selectedUser?.id)?.toString();
-      const isFromSelected = currentSelectedId === senderId;
+      const senderId = (newMessage.senderID?._id || newMessage.senderID)?.toString().trim().toLowerCase();
+      const currentSelectedId = (selectedUser?._id || selectedUser?.id)?.toString().trim().toLowerCase();
+      const isFromSelected = !!currentSelectedId && !!senderId && currentSelectedId === senderId;
 
-      const updatedUsers = users.map(u => (u._id === senderId || u.id === senderId) ? { ...u, lastMessage: newMessage } : u);
-      const targetUser = updatedUsers.find(u => u._id === senderId || u.id === senderId);
-      const otherUsers = updatedUsers.filter(u => u._id !== senderId && u.id !== senderId);
+      const updatedUsers = users.map(u =>
+        (u._id?.toString().toLowerCase() === senderId ||
+         u.id?.toString().toLowerCase() === senderId)
+          ? { ...u, lastMessage: newMessage } : u
+      );
+      const targetUser = updatedUsers.find(u =>
+        u._id?.toString().toLowerCase() === senderId ||
+        u.id?.toString().toLowerCase() === senderId
+      );
+      const otherUsers = updatedUsers.filter(u =>
+        u._id?.toString().toLowerCase() !== senderId &&
+        u.id?.toString().toLowerCase() !== senderId
+      );
 
+      // Only add to messages array if this chat is currently open
+      const alreadyInMessages = messages.some(m => m._id?.toString() === newMessage._id?.toString());
       set({
-        messages: isFromSelected ? [...messages, newMessage] : messages,
+        messages: isFromSelected && !alreadyInMessages ? [...messages, newMessage] : messages,
         users: targetUser ? [targetUser, ...otherUsers] : updatedUsers,
         unreadCounts: isFromSelected
           ? unreadCounts
           : { ...unreadCounts, [senderId]: (unreadCounts[senderId] || 0) + 1 }
       });
 
-      // Always show toast notification for new messages to ensure visibility
-      const sender = users.find(u => (u?._id || u?.id)?.toString() === senderId);
-      const senderName = sender?.fullName || "New Message";
-      const msgText = newMessage.image ? "📷 Sent an image" : (newMessage.text || "Message interaction");
-      
-      toast.success(`${senderName}: ${msgText}`, {
-        duration: 4000,
-        position: 'top-right',
-      });
+      // Only show toast if the chat with the sender is NOT currently open
+      if (!isFromSelected) {
+        const sender = users.find(u =>
+          u?._id?.toString().toLowerCase() === senderId ||
+          u?.id?.toString().toLowerCase() === senderId
+        );
+        const senderName = sender?.fullName || "New Message";
+        const msgText = newMessage.image ? "📷 Photo" : (newMessage.text || "Message");
+        toast.success(`${senderName}: ${msgText}`, {
+          duration: 3000,
+          position: 'top-right',
+        });
+      }
     });
+
 
     socket.on("messagesSeen", ({ byUserId }) => {
       const { selectedUser, messages, users } = get();
