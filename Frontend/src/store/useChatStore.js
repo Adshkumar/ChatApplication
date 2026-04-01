@@ -58,17 +58,62 @@ export const useChatStore = create((set, get) => ({
     if (!selectedUser) return;
     const userId = selectedUser._id || selectedUser.id;
 
+    // --- Optimistic UI Update ---
+    const tempId = `temp-${Date.now()}`;
+    const textData = messageData.get ? messageData.get("text") : messageData.text;
+    const imageData = messageData.get ? messageData.get("image") : messageData.image;
+    
+    let imageUrl = null;
+    if (imageData instanceof File || imageData instanceof Blob) {
+      imageUrl = URL.createObjectURL(imageData);
+    } else if (typeof imageData === "string") {
+      imageUrl = imageData; // fallback if it's somehow a string
+    }
+
+    const authUser = useAuthStore.getState().authUser;
+    
+    const optimisticMessage = {
+      _id: tempId,
+      senderID: authUser._id || authUser.id,
+      receiverID: userId,
+      text: textData || "",
+      image: imageUrl,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true // Custom flag you can stick loading spinners to if you want
+    };
+
+    // Immidiately show in UI
+    set({
+      messages: [...messages, optimisticMessage],
+      users: users.map(u => (u._id === userId || u.id === userId) ? { ...u, lastMessage: optimisticMessage } : u)
+    });
+
     try {
       const res = await axiosInstance.post(`/messages/send/${userId}`, messageData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const newMessage = res.data;
-      set({
-        messages: [...messages, newMessage],
-        users: users.map(u => (u._id === userId || u.id === userId) ? { ...u, lastMessage: newMessage } : u)
-      });
+      
+      // Replace the temporary optimistic message with the real one from the server
+      set(state => ({
+        messages: state.messages.map(m => m._id === tempId ? newMessage : m),
+        users: state.users.map(u => 
+          (u._id === userId || u.id === userId) && u.lastMessage?._id === tempId 
+            ? { ...u, lastMessage: newMessage } 
+            : u
+        )
+      }));
+      
+      // Cleanup Object URL to prevent memory leaks
+      if (imageUrl && (imageData instanceof File || imageData instanceof Blob)) {
+        URL.revokeObjectURL(imageUrl);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message");
+      // Remove optimistic message on failure
+      set(state => ({
+        messages: state.messages.filter(m => m._id !== tempId),
+      }));
     }
   },
 
