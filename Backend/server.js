@@ -60,6 +60,10 @@ io.on("connection", (socket) => {
     if (toUserId) io.to(toUserId.toString()).emit("call-accepted", { answer, roomId });
   });
 
+  socket.on("call-rejected", async ({ toUserId, roomId }) => {
+    if (toUserId) io.to(toUserId.toString()).emit("call-rejected", { roomId });
+  });
+
   socket.on("disconnect", () => {
     if (userId && userSocketMap.has(userId)) {
       userSocketMap.get(userId).delete(socket.id);
