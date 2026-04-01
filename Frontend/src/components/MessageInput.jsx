@@ -8,6 +8,7 @@ const MessageInput = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const isSendingRef = useRef(false);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const { sendMessage, setTyping } = useChatStore();
@@ -57,9 +58,11 @@ const MessageInput = () => {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
-    // Prevent duplicate sends from rapid clicks or double-submit
-    if (isSending) return;
+    
+    // Prevent duplicate sends from rapid clicks or double-submit synchronously
+    if (isSendingRef.current) return;
 
+    isSendingRef.current = true;
     setIsSending(true);
     try {
       const formData = new FormData();
@@ -84,6 +87,7 @@ const MessageInput = () => {
       console.error("Failed to send message:", error);
     } finally {
       setIsSending(false);
+      isSendingRef.current = false;
     }
   };
 
