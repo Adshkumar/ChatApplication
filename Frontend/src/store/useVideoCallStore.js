@@ -27,6 +27,9 @@ export const useVideoCallStore = create((set, get) => ({
   isMuted: false,
   isMinimized: false,
 
+  setMuted: (val) => set({ isMuted: val }),
+  setMinimized: (val) => set({ isMinimized: val }),
+
   _getSocket: () => useAuthStore.getState().socket,
   _getAuthUser: () => useAuthStore.getState().authUser,
 
