@@ -1,3 +1,4 @@
+console.log("🚀 LATEST CODE LOADED - NO MORE GHOST FILES");
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
