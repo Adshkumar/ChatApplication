@@ -111,6 +111,41 @@ export const useVideoCallStore = create((set, get) => ({
     get()._cleanup();
   },
 
+  _createPeerConnection: (remoteUserId, localStream, roomId) => {
+    const pc = new RTCPeerConnection(ICE_SERVERS);
+
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        get()._getSocket()?.emit("ice-candidate", {
+          toUserId: remoteUserId,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      set((state) => {
+        const peer = state.peers[remoteUserId];
+        const stream = event.streams[0] || peer?.remoteStream || new MediaStream();
+
+        if (!stream.getTracks().find(t => t.id === event.track.id)) {
+          stream.addTrack(event.track);
+        }
+
+        return {
+          peers: {
+            ...state.peers,
+            [remoteUserId]: { ...state.peers[remoteUserId], remoteStream: new MediaStream(stream.getTracks()) },
+          },
+        };
+      });
+    };
+
+    return pc;
+  },
+
   handleIncomingCall: (payload) => {
     const { fromUser, offer, roomId, isAddedToCall } = payload;
     if (get().callStatus === "active" && !isAddedToCall) {
