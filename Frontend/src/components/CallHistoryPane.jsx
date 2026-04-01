@@ -3,7 +3,7 @@ import { useCallHistoryStore } from "../store/useCallHistoryStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { formatMessageTime } from "../lib/utils";
-import { PhoneIncoming, PhoneOutgoing, PhoneMissed, Video, Phone, Trash2 } from "lucide-react";
+import { PhoneIncoming, PhoneOutgoing, PhoneMissed, Phone, Trash2 } from "lucide-react";
 
 const CallHistoryPane = ({ isFullPanel = false }) => {
   const { getCallHistory, callLogs, isHistoryLoading, deleteLog } = useCallHistoryStore();
@@ -37,7 +37,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
           <div>
             <p className="text-2xl font-bold">No recent calls</p>
             <p className="text-zinc-500 text-sm max-w-xs mx-auto mt-2">
-              Stay connected! All your voice and video calls will appear here for quick access.
+              Stay connected! All your voice calls will appear here for quick access.
             </p>
           </div>
         </div>
@@ -99,7 +99,7 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
                 <div className="flex items-center gap-3 shrink-0 ml-4">
                   {isFullPanel && log.status !== "missed" && (
                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-tighter opacity-0 group-hover:opacity-60 transition-opacity hidden md:block">
-                        {log.status === "completed" ? "Successfully Ended" : log.status}
+                        {log.status === "completed" ? "Ended" : log.status}
                      </span>
                   )}
                   <button
@@ -110,15 +110,11 @@ const CallHistoryPane = ({ isFullPanel = false }) => {
                     <Trash2 size={16} />
                   </button>
                   <button
-                    onClick={() => startCall(partner, log.type || "video")}
-                    title={`Return ${log.type === "audio" ? "audio" : "video"} call`}
+                    onClick={() => startCall(partner, "audio")}
+                    title="Return voice call"
                     className={`btn btn-circle ${isFullPanel ? "btn-md bg-primary text-primary-content hover:scale-105 shadow-primary/20" : "btn-sm btn-ghost hover:bg-primary/10 text-primary"} transition-all`}
                   >
-                    {log.type === "audio" ? (
-                      <Phone size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
-                    ) : (
-                      <Video size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
-                    )}
+                    <Phone size={isFullPanel ? 20 : 18} fill={isFullPanel ? "currentColor" : "none"} />
                   </button>
                 </div>
               </div>

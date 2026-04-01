@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useStatusStore } from "../store/useStatusStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { Plus, Trash2, X, Image as ImageIcon, Video, Send, Loader2, CircleDashed, Eye, Users, MessageCircle } from "lucide-react";
+import { Plus, Trash2, X, Image as ImageIcon, Phone, Send, Loader2, CircleDashed, Eye, Users, MessageCircle } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import toast from "react-hot-toast";
 
@@ -65,7 +65,7 @@ const StatusPane = () => {
       useChatStore.getState().setSelectedUser(targetUser);
 
       const formData = new FormData();
-      const context = selectedStatus.imageUrl ? "Photo" : selectedStatus.videoUrl ? "Video" : "Status";
+      const context = selectedStatus.imageUrl ? "Photo" : selectedStatus.videoUrl ? "Media" : "Status";
       formData.append("text", `🤳 Replied to your ${context}: ${replyText}`);
 
       await useChatStore.getState().sendMessage(formData);
@@ -243,7 +243,7 @@ const StatusPane = () => {
                   <div className="text-center group-hover:scale-110 transition-transform">
                     <div className="flex items-center justify-center gap-4 mb-4">
                       <div className="p-4 bg-zinc-900 rounded-2xl text-zinc-400 group-hover:text-primary"><ImageIcon size={32} /></div>
-                      <div className="p-4 bg-zinc-900 rounded-2xl text-zinc-400 group-hover:text-primary"><Video size={32} /></div>
+                      <div className="p-4 bg-zinc-900 rounded-2xl text-zinc-400 group-hover:text-primary"><Phone size={32} /></div>
                     </div>
                     <p className="text-sm text-zinc-500 font-medium px-8">Drop an image or video clip up to 30s</p>
                   </div>

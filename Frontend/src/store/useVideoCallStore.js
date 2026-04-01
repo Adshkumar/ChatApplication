@@ -208,6 +208,13 @@ export const useVideoCallStore = create((set, get) => ({
     set({ _isSubscribed: true });
   },
 
+  unsubscribeFromCallEvents: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    ["v3-incoming-call", "incoming-call", "call-accepted", "call-rejected", "ice-candidate", "call-ended", "call-log-updated"].forEach(e => socket.off(e));
+    set({ _isSubscribed: false });
+  },
+
   _cleanup: () => {
     const { localStream, peers } = get();
     if (localStream) localStream.getTracks().forEach((t) => t.stop());
