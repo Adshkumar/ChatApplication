@@ -11,7 +11,7 @@ import {
  */
 const VideoCallWindow = () => {
   const {
-    callStatus, remoteUser, endCall, isMuted, setMuted, isMinimized, setMinimized
+    callStatus, remoteUser, endCall, isMuted, setMuted, isMinimized, setMinimized, roomId
   } = useVideoCallStore();
   const { authUser } = useAuthStore();
   const [callTime, setCallTime] = useState("0:00");
