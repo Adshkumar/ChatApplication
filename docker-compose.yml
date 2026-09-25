@@ -1,0 +1,14 @@
+name: chat-app
+# MONGO container
+services:
+  mongo:
+    image: mongo:7.0.12
+    ports: 
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - chat-app
+#Backend Container
+
+#Frontend Container
