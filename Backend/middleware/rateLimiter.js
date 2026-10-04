@@ -4,11 +4,9 @@ import rateLimit from "express-rate-limit";
 // (All users behind a NAT or proxy would share the same IP)
 const getUserKey = (req) => {
   try {
-    // Try Authorization header first
     const authHeader = req.headers["authorization"];
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      // Decode payload (not verify — rate limiter doesn't need full auth)
       const payload = JSON.parse(
         Buffer.from(token.split(".")[1], "base64url").toString()
       );
@@ -16,7 +14,7 @@ const getUserKey = (req) => {
         return `user_${payload.userId || payload.id || payload._id}`;
       }
     }
-    // Fallback: IP address
+
     const forwarded = req.headers["x-forwarded-for"];
     return forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
   } catch {
