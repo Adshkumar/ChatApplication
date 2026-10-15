@@ -8,7 +8,7 @@ const getUserKey = (req) => {
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
       const payload = JSON.parse(
-        Buffer.from(token.split(".")[1], "base64url").toString()
+        Buffer.from(token.split(".")[1], "base64url").toString(),
       );
       if (payload?.userId || payload?.id || payload?._id) {
         return `user_${payload.userId || payload.id || payload._id}`;
@@ -16,35 +16,39 @@ const getUserKey = (req) => {
     }
 
     const forwarded = req.headers["x-forwarded-for"];
-    return forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
+    return forwarded
+      ? forwarded.split(",")[0].trim()
+      : req.socket.remoteAddress;
   } catch {
     const forwarded = req.headers["x-forwarded-for"];
-    return forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
+    return forwarded
+      ? forwarded.split(",")[0].trim()
+      : req.socket.remoteAddress;
   }
 };
 
 export const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000,   // 1 minute
-  max: 300,                   // 300 requests/min per user (supports active chat + video)
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 300, // 300 requests/min per user (supports active chat + video)
   keyGenerator: getUserKey,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
     res.status(429).json({
-      message: "Too many requests, please slow down."
+      message: "Too many requests, please slow down.",
     });
-  }
+  },
 });
 
 export const authLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,  // 10 minutes
-  max: 20,                    // 20 login attempts per 10 min
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 20, // 20 login attempts per 10 min
   keyGenerator: getUserKey,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
     res.status(429).json({
-      message: 'Too many login attempts, please try again after 10 minutes'
+      message: "Too many login attempts, please try again after 10 minutes",
     });
-  }
+  },
 });
