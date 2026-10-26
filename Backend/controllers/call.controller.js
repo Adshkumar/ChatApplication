@@ -49,7 +49,6 @@ export const deleteCallLog = async (req, res) => {
 
     res.status(200).json({ message: "Call log deleted from your view" });
   } catch (error) {
-    // console.error("Error in deleteCallLog:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -66,7 +65,6 @@ export const createCallLog = async (data) => {
     await newCallLog.save();
     return newCallLog;
   } catch (error) {
-    // console.log("Error in createCallLog:", error.message);
   }
 };
 
@@ -74,6 +72,5 @@ export const updateCallStatus = async (callId, status, duration = 0) => {
   try {
     await CallLog.findByIdAndUpdate(callId, { status, duration });
   } catch (error) {
-    // console.log("Error in updateCallStatus:", error.message);
   }
 };
